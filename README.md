@@ -1,9 +1,4 @@
-+114
-Lines changed: 114 additions & 0 deletions
 
-
-Original file line number	Diff line number	Diff line change
-@@ -0,0 +1,114 @@
 # Projeto Adoção de Animais - ACAPRA
 ![Logo ACAPRA](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTfmfg0ua5Fn6wbh20Wcp_JA7WsJaGBCKnEQ&s)  
 **Projeto em desenvolvimento** 🚧
