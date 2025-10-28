@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Menu, X, User, LogOut } from 'lucide-react';
+import { Menu, X, User, LogOut, Instagram, Facebook, Heart } from 'lucide-react';
 import logo from '../materiais/logo roxa.png';
 
 const Navbar = () => {
@@ -39,7 +39,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -53,6 +53,35 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
+            
+            {/* Redes Sociais */}
+            <div className="flex items-center space-x-3 border-l border-gray-200 pl-6">
+              <a
+                href="https://instagram.com/acapra"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full text-gray-600 hover:text-pink-500 hover:bg-pink-50 transition-all duration-200 transform hover:scale-110"
+                aria-label="Instagram da ACAPRA"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://facebook.com/acapra"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 transform hover:scale-110"
+                aria-label="Facebook da ACAPRA"
+              >
+                <Facebook className="h-5 w-5" />
+              </a>
+              <Link
+                to="/doacoes"
+                className="p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-red-50 transition-all duration-200 transform hover:scale-110"
+                aria-label="Fazer doação"
+              >
+                <Heart className="h-5 w-5" />
+              </Link>
+            </div>
             
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">

@@ -13,17 +13,26 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const { limit = 10, page = 1, status = 'publicado' } = req.query;
+      const { limit = 10, page = 1, status } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
       
       let query = supabase
-        .from('news')
-        .select('*', { count: 'exact' })
-        .eq('status', status)
+        .from('adoptions')
+        .select(`
+          *,
+          animal:animals(*),
+          adopter:users(*)
+        `, { count: 'exact' });
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      query = query
         .range(offset, offset + parseInt(limit) - 1)
         .order('created_at', { ascending: false });
 
-      const { data: news, error, count } = await query;
+      const { data: adoptions, error, count } = await query;
 
       if (error) {
         throw error;
@@ -32,7 +41,7 @@ export default async function handler(req, res) {
       const totalPages = Math.ceil(count / parseInt(limit));
 
       res.status(200).json({
-        news: news || [],
+        adoptions: adoptions || [],
         pagination: {
           page: parseInt(page),
           pages: totalPages,
@@ -42,11 +51,11 @@ export default async function handler(req, res) {
       });
 
     } else if (req.method === 'POST') {
-      const newsData = req.body;
+      const adoptionData = req.body;
       
-      const { data: news, error } = await supabase
-        .from('news')
-        .insert([newsData])
+      const { data: adoption, error } = await supabase
+        .from('adoptions')
+        .insert([adoptionData])
         .select()
         .single();
 
@@ -55,8 +64,8 @@ export default async function handler(req, res) {
       }
 
       res.status(201).json({
-        message: 'Notícia criada com sucesso',
-        news
+        message: 'Solicitação de adoção criada com sucesso',
+        adoption
       });
 
     } else {
@@ -64,7 +73,7 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
-    console.error('News API error:', error);
+    console.error('Adoptions API error:', error);
     res.status(500).json({
       message: 'Erro interno do servidor',
       error: error.message

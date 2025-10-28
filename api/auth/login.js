@@ -1,4 +1,8 @@
-export default function handler(req, res) {
+import { supabase, executeQuery } from '../_lib/supabase.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+export default async function handler(req, res) {
   // Configurar CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -10,23 +14,61 @@ export default function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { email, password } = req.body;
+    try {
+      const { email, password } = req.body;
 
-    // Credenciais hardcoded para teste
-    if (email === 'admin@acapra.org' && password === 'admin123') {
+      if (!email || !password) {
+        return res.status(400).json({
+          message: 'Email e senha são obrigatórios'
+        });
+      }
+
+      // Buscar usuário no banco
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (error || !user) {
+        return res.status(401).json({
+          message: 'Credenciais inválidas'
+        });
+      }
+
+      // Verificar senha
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      
+      if (!isValidPassword) {
+        return res.status(401).json({
+          message: 'Credenciais inválidas'
+        });
+      }
+
+      // Gerar JWT
+      const token = jwt.sign(
+        { 
+          userId: user.id, 
+          email: user.email, 
+          role: user.role 
+        },
+        process.env.JWT_SECRET || 'acapra-secret-key-2024',
+        { expiresIn: '7d' }
+      );
+
+      // Remover senha da resposta
+      const { password: _, ...userWithoutPassword } = user;
+
       res.status(200).json({
         message: 'Login realizado com sucesso',
-        token: 'mock-jwt-token-12345',
-        user: {
-          id: 1,
-          name: 'Administrador ACAPRA',
-          email: 'admin@acapra.org',
-          role: 'admin'
-        }
+        token,
+        user: userWithoutPassword
       });
-    } else {
-      res.status(401).json({
-        message: 'Credenciais inválidas'
+
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({
+        message: 'Erro interno do servidor'
       });
     }
   } else {

@@ -1,4 +1,5 @@
 import { supabase } from './_lib/supabase.js';
+import bcrypt from 'bcryptjs';
 
 export default async function handler(req, res) {
   // Configurar CORS
@@ -13,17 +14,14 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const { limit = 10, page = 1, status = 'publicado' } = req.query;
+      const { limit = 10, page = 1 } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
       
-      let query = supabase
-        .from('news')
-        .select('*', { count: 'exact' })
-        .eq('status', status)
+      const { data: users, error, count } = await supabase
+        .from('users')
+        .select('id, name, email, role, created_at, updated_at', { count: 'exact' })
         .range(offset, offset + parseInt(limit) - 1)
         .order('created_at', { ascending: false });
-
-      const { data: news, error, count } = await query;
 
       if (error) {
         throw error;
@@ -32,7 +30,7 @@ export default async function handler(req, res) {
       const totalPages = Math.ceil(count / parseInt(limit));
 
       res.status(200).json({
-        news: news || [],
+        users: users || [],
         pagination: {
           page: parseInt(page),
           pages: totalPages,
@@ -42,12 +40,15 @@ export default async function handler(req, res) {
       });
 
     } else if (req.method === 'POST') {
-      const newsData = req.body;
+      const { password, ...userData } = req.body;
       
-      const { data: news, error } = await supabase
-        .from('news')
-        .insert([newsData])
-        .select()
+      // Hash da senha
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      const { data: user, error } = await supabase
+        .from('users')
+        .insert([{ ...userData, password: hashedPassword }])
+        .select('id, name, email, role, created_at, updated_at')
         .single();
 
       if (error) {
@@ -55,8 +56,8 @@ export default async function handler(req, res) {
       }
 
       res.status(201).json({
-        message: 'Notícia criada com sucesso',
-        news
+        message: 'Usuário criado com sucesso',
+        user
       });
 
     } else {
@@ -64,7 +65,7 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
-    console.error('News API error:', error);
+    console.error('Users API error:', error);
     res.status(500).json({
       message: 'Erro interno do servidor',
       error: error.message

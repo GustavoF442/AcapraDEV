@@ -93,7 +93,7 @@ const About = () => {
             </div>
             <div className="relative">
               <img
-                src="/about-history.jpg"
+                src="./src/materiais/ggg.jpg"
                 alt="História da ACAPRA"
                 className="rounded-lg shadow-lg w-full h-96 object-cover"
               />

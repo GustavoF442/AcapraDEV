@@ -1,4 +1,6 @@
-export default function handler(req, res) {
+import { supabase } from './_lib/supabase.js';
+
+export default async function handler(req, res) {
   // Configurar CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -9,57 +11,79 @@ export default function handler(req, res) {
     return;
   }
 
-  if (req.method === 'GET') {
-    const { limit = 10, page = 1, species, status, search } = req.query;
-    
-    // Dados mock para demonstração
-    const mockAnimals = [
-      {
-        id: 1,
-        name: 'Rex',
-        species: 'Cachorro',
-        breed: 'Vira-lata',
-        age: 'Adulto',
-        size: 'Médio',
-        gender: 'Macho',
-        status: 'Disponível',
-        description: 'Rex é um cachorro muito carinhoso e brincalhão.',
-        photos: []
-      },
-      {
-        id: 2,
-        name: 'Luna',
-        species: 'Gato',
-        breed: 'SRD',
-        age: 'Jovem',
-        size: 'Pequeno',
-        gender: 'Fêmea',
-        status: 'Disponível',
-        description: 'Luna é uma gatinha muito dócil e carinhosa.',
-        photos: []
+  try {
+    if (req.method === 'GET') {
+      const { limit = 10, page = 1, species, status, search } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+      
+      let query = supabase
+        .from('animals')
+        .select(`
+          *,
+          photos:animal_photos(*)
+        `, { count: 'exact' });
+
+      // Filtros
+      if (species) {
+        query = query.eq('species', species);
       }
-    ];
-    
-    res.status(200).json({
-      animals: mockAnimals,
-      pagination: {
-        page: parseInt(page),
-        pages: 1,
-        total: mockAnimals.length,
-        limit: parseInt(limit)
+      if (status) {
+        query = query.eq('status', status);
       }
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+      }
+
+      // Paginação
+      query = query
+        .range(offset, offset + parseInt(limit) - 1)
+        .order('created_at', { ascending: false });
+
+      const { data: animals, error, count } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      const totalPages = Math.ceil(count / parseInt(limit));
+
+      res.status(200).json({
+        animals: animals || [],
+        pagination: {
+          page: parseInt(page),
+          pages: totalPages,
+          total: count,
+          limit: parseInt(limit)
+        }
+      });
+
+    } else if (req.method === 'POST') {
+      const animalData = req.body;
+      
+      const { data: animal, error } = await supabase
+        .from('animals')
+        .insert([animalData])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      res.status(201).json({
+        message: 'Animal criado com sucesso',
+        animal
+      });
+
+    } else {
+      res.status(405).json({ message: 'Method not allowed' });
+    }
+
+  } catch (error) {
+    console.error('Animals API error:', error);
+    res.status(500).json({
+      message: 'Erro interno do servidor',
+      error: error.message
     });
-  } else if (req.method === 'POST') {
-    // Criar novo animal (mock)
-    res.status(201).json({
-      message: 'Animal criado com sucesso',
-      animal: {
-        id: Date.now(),
-        ...req.body,
-        createdAt: new Date()
-      }
-    });
-  } else {
-    res.status(405).json({ message: 'Method not allowed' });
   }
 }
