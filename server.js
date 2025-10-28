@@ -135,6 +135,123 @@ app.get('/api/test-supabase', async (_req, res) => {
   }
 });
 
+// Criar cliente Supabase global
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
+// API Routes - Animals
+app.get('/api/animals', async (req, res) => {
+  try {
+    const { status = 'disponível', page = 1, limit = 12 } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('animals')
+      .select('*', { count: 'exact' })
+      .eq('status', status)
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('Erro ao buscar animais:', error);
+      return res.status(500).json({
+        error: 'Erro ao buscar animais',
+        details: error.message
+      });
+    }
+
+    res.json({
+      animals: data || [],
+      total: count || 0,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil((count || 0) / limit)
+    });
+
+  } catch (error) {
+    console.error('Erro na API animals:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor',
+      details: error.message
+    });
+  }
+});
+
+// API Route - Single Animal
+app.get('/api/animals/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from('animals')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Animal não encontrado' });
+      }
+      return res.status(500).json({
+        error: 'Erro ao buscar animal',
+        details: error.message
+      });
+    }
+
+    res.json(data);
+
+  } catch (error) {
+    console.error('Erro ao buscar animal:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor',
+      details: error.message
+    });
+  }
+});
+
+// API Route - News
+app.get('/api/news', async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const { data, error, count } = await supabase
+      .from('news')
+      .select('*', { count: 'exact' })
+      .eq('published', true)
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao buscar notícias:', error);
+      return res.status(500).json({
+        error: 'Erro ao buscar notícias',
+        details: error.message
+      });
+    }
+
+    res.json({
+      news: data || [],
+      total: count || 0,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil((count || 0) / limit)
+    });
+
+  } catch (error) {
+    console.error('Erro na API news:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor',
+      details: error.message
+    });
+  }
+});
+
 // Servir arquivos estáticos do React (apenas em produção)
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
