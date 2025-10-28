@@ -1,13 +1,14 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('SUPABASE_URL e SUPABASE_SERVICE_KEY devem estar definidos no .env');
+  console.error('❌ SUPABASE_URL e SUPABASE_SERVICE_KEY devem estar definidos nas variáveis de ambiente');
+  throw new Error('SUPABASE_URL e SUPABASE_SERVICE_KEY devem estar definidos nas variáveis de ambiente');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
@@ -15,7 +16,7 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // Função para testar conexão
-export async function testConnection() {
+async function testConnection() {
   try {
     const { data, error } = await supabase
       .from('users')
@@ -36,7 +37,7 @@ export async function testConnection() {
 }
 
 // Função para executar queries com tratamento de erro
-export async function executeQuery(queryFn) {
+async function executeQuery(queryFn) {
   try {
     const result = await queryFn(supabase);
     if (result.error) {
@@ -49,3 +50,9 @@ export async function executeQuery(queryFn) {
     throw error;
   }
 }
+
+module.exports = {
+  supabase,
+  testConnection,
+  executeQuery
+};
