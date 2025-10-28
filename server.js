@@ -12,37 +12,8 @@ const fs = require('fs');
 
 const app = express();
 
-// Configuração do Multer para upload de arquivos
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    // Determinar tipo baseado na rota
-    let type = 'general';
-    if (req.route && req.route.path) {
-      if (req.route.path.includes('animals')) {
-        type = 'animals';
-      } else if (req.route.path.includes('news')) {
-        type = 'news';
-      } else if (req.params.type) {
-        type = req.params.type;
-      }
-    }
-    
-    const uploadPath = path.join(__dirname, 'uploads', type);
-    
-    // Criar diretório se não existir
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    // Gerar nome único para o arquivo
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-  }
-});
+// Configuração do Multer - usar memoryStorage para Supabase
+const storage = multer.memoryStorage();
 
 const upload = multer({ 
   storage: storage,
@@ -92,6 +63,33 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Usar apenas Supabase client - sem Sequelize
 const { createClient } = require('@supabase/supabase-js');
+
+// Helper para upload no Supabase Storage
+const uploadImageToSupabase = async (file) => {
+  const supabaseClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+  const fileExt = path.extname(file.originalname);
+  const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+  const filePath = `animals/${fileName}`;
+
+  const { error } = await supabaseClient.storage
+    .from('acapra-files')
+    .upload(filePath, file.buffer, { contentType: file.mimetype });
+
+  if (error) throw new Error('Erro ao fazer upload: ' + error.message);
+
+  const { data: { publicUrl } } = supabaseClient.storage
+    .from('acapra-files')
+    .getPublicUrl(filePath);
+
+  return {
+    filename: fileName,
+    originalname: file.originalname,
+    url: publicUrl,
+    path: publicUrl,
+    size: file.size,
+    supabasePath: filePath
+  };
+};
 
 const initDatabase = async () => {
   try {
@@ -1276,20 +1274,13 @@ app.post('/api/animals', authenticateToken, upload.array('photos', 10), async (r
     console.log('Dados recebidos:', req.body);
     console.log('Arquivos recebidos:', req.files);
 
-    // Processar fotos enviadas
+    // Processar fotos e fazer upload para Supabase
     const photos = [];
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        const relativePath = path.relative(__dirname, file.path).replace(/\\/g, '/');
-        photos.push({
-          filename: file.filename,
-          path: relativePath,
-          url: `/${relativePath}`,
-          originalname: file.originalname,
-          size: file.size,
-          isMain: photos.length === 0 // Primeira foto é a principal
-        });
-      });
+      for (let i = 0; i < req.files.length; i++) {
+        const uploadedPhoto = await uploadImageToSupabase(req.files[i]);
+        photos.push({ ...uploadedPhoto, isMain: i === 0 });
+      }
     }
 
     const animalData = {
@@ -1350,20 +1341,13 @@ app.put('/api/animals/:id', authenticateToken, upload.array('photos', 10), async
     console.log('Dados recebidos:', req.body);
     console.log('Arquivos recebidos:', req.files);
 
-    // Processar novas fotos se enviadas
+    // Processar novas fotos e fazer upload para Supabase
     const newPhotos = [];
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        const relativePath = path.relative(__dirname, file.path).replace(/\\/g, '/');
-        newPhotos.push({
-          filename: file.filename,
-          path: relativePath,
-          url: `/${relativePath}`,
-          originalname: file.originalname,
-          size: file.size,
-          isMain: newPhotos.length === 0
-        });
-      });
+      for (let i = 0; i < req.files.length; i++) {
+        const uploadedPhoto = await uploadImageToSupabase(req.files[i]);
+        newPhotos.push({ ...uploadedPhoto, isMain: false });
+      }
     }
 
     // Buscar dados atuais do animal para manter fotos existentes se necessário
