@@ -6,7 +6,6 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import './App.css';
-import logo from './materiais/logo roxa.png';
 import Animals from './pages/Animals';
 import AnimalDetail from './pages/AnimalDetail';
 import AdoptionForm from './pages/AdoptionForm';

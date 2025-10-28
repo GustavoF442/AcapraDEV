@@ -6,7 +6,7 @@ import logo from '../materiais/logo roxa.png';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 

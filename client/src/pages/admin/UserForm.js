@@ -18,7 +18,7 @@ const UserForm = () => {
   const watchRole = watch('role');
 
   // Carregar dados do usuário para edição
-  const { data: userData } = useQuery(
+  useQuery(
     ['user', id],
     () => axios.get(`/api/users/${id}`).then(res => res.data),
     { 
