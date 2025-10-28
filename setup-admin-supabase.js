@@ -17,7 +17,7 @@ async function setupAdminUser() {
 
     // Verificar se já existe admin
     const { data: existingUsers, error: checkError } = await supabase
-      .from('users')
+      .from('Users')
       .select('*')
       .eq('email', 'admin@acapra.org')
       .limit(1);
@@ -41,7 +41,7 @@ async function setupAdminUser() {
 
     // Criar usuário admin
     const { data: newUser, error: createError } = await supabase
-      .from('users')
+      .from('Users')
       .insert([
         {
           name: 'Administrador ACAPRA',
@@ -49,7 +49,7 @@ async function setupAdminUser() {
           password: hashedPassword,
           role: 'admin',
           status: 'active',
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         }
       ])
       .select();

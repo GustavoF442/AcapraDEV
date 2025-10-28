@@ -149,11 +149,11 @@ app.get('/api/animals', async (req, res) => {
     const offset = (page - 1) * limit;
 
     let query = supabase
-      .from('animals')
+      .from('Animals')
       .select('*', { count: 'exact' })
       .eq('status', status)
       .range(offset, offset + limit - 1)
-      .order('created_at', { ascending: false });
+      .order('createdAt', { ascending: false });
 
     const { data, error, count } = await query;
 
@@ -188,7 +188,7 @@ app.get('/api/animals/:id', async (req, res) => {
     const { id } = req.params;
 
     const { data, error } = await supabase
-      .from('animals')
+      .from('Animals')
       .select('*')
       .eq('id', id)
       .single();
@@ -221,11 +221,11 @@ app.get('/api/news', async (req, res) => {
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await supabase
-      .from('news')
+      .from('News')
       .select('*', { count: 'exact' })
-      .eq('published', true)
+      .eq('status', 'publicado')
       .range(offset, offset + limit - 1)
-      .order('created_at', { ascending: false });
+      .order('createdAt', { ascending: false });
 
     if (error) {
       console.error('Erro ao buscar notícias:', error);
@@ -265,7 +265,7 @@ app.post('/api/auth/login', async (req, res) => {
 
     // Buscar usuário no Supabase
     const { data: users, error } = await supabase
-      .from('users')
+      .from('Users')
       .select('*')
       .eq('email', email.toLowerCase())
       .limit(1);
@@ -340,10 +340,10 @@ const adminOnly = (req, res, next) => {
 app.get('/api/admin/stats', authenticateToken, async (req, res) => {
   try {
     const [animalsResult, adoptionsResult, contactsResult, newsResult] = await Promise.all([
-      supabase.from('animals').select('status', { count: 'exact' }),
-      supabase.from('adoptions').select('status', { count: 'exact' }),
-      supabase.from('contacts').select('status', { count: 'exact' }),
-      supabase.from('news').select('published', { count: 'exact' })
+      supabase.from('Animals').select('status', { count: 'exact' }),
+      supabase.from('Adoptions').select('status', { count: 'exact' }),
+      supabase.from('Contacts').select('status', { count: 'exact' }),
+      supabase.from('News').select('status', { count: 'exact' })
     ]);
 
     res.json({
@@ -361,7 +361,7 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
       },
       news: {
         total: newsResult.count || 0,
-        published: newsResult.data?.filter(n => n.published === true).length || 0
+        published: newsResult.data?.filter(n => n.status === 'publicado').length || 0
       }
     });
 
@@ -378,10 +378,10 @@ app.get('/api/admin/animals', authenticateToken, async (req, res) => {
     const offset = (page - 1) * limit;
 
     let query = supabase
-      .from('animals')
+      .from('Animals')
       .select('*', { count: 'exact' })
       .range(offset, offset + limit - 1)
-      .order('created_at', { ascending: false });
+      .order('createdAt', { ascending: false });
 
     if (status) {
       query = query.eq('status', status);
@@ -414,10 +414,10 @@ app.get('/api/admin/adoptions', authenticateToken, async (req, res) => {
     const offset = (page - 1) * limit;
 
     let query = supabase
-      .from('adoptions')
+      .from('Adoptions')
       .select('*', { count: 'exact' })
       .range(offset, offset + limit - 1)
-      .order('created_at', { ascending: false });
+      .order('createdAt', { ascending: false });
 
     if (status) {
       query = query.eq('status', status);
@@ -450,10 +450,10 @@ app.get('/api/admin/contacts', authenticateToken, async (req, res) => {
     const offset = (page - 1) * limit;
 
     let query = supabase
-      .from('contacts')
+      .from('Contacts')
       .select('*', { count: 'exact' })
       .range(offset, offset + limit - 1)
-      .order('created_at', { ascending: false });
+      .order('createdAt', { ascending: false });
 
     if (status) {
       query = query.eq('status', status);
