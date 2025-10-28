@@ -1229,6 +1229,26 @@ app.get('/api/adoptions', authenticateToken, async (req, res) => {
   }
 });
 
+// Adoptions - Buscar por animal
+app.get('/api/animals/:animalId/adoptions', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Adoptions')
+      .select('*')
+      .eq('animalId', req.params.animalId)
+      .order('createdAt', { ascending: false });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ adoptions: data || [] });
+  } catch (error) {
+    console.error('Erro ao buscar adoções do animal:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Adoptions - Atualizar status
 app.patch('/api/adoptions/:id/status', authenticateToken, async (req, res) => {
   try {
@@ -1427,16 +1447,33 @@ app.delete('/api/animals/:id', authenticateToken, adminOnly, async (req, res) =>
 // Animals - Marcar como adotado
 app.patch('/api/animals/:id/adopt', authenticateToken, async (req, res) => {
   try {
-    const { adopterName, adopterContact, adopterNotes } = req.body;
+    const { adoptionId, adopterName, adopterEmail, adopterPhone } = req.body;
+
+    // Se tem adoptionId, atualizar a adoption também
+    if (adoptionId) {
+      const { error: adoptionError } = await supabase
+        .from('Adoptions')
+        .update({
+          status: 'aprovado',
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: req.user.id
+        })
+        .eq('id', adoptionId);
+
+      if (adoptionError) {
+        console.error('Erro ao atualizar adoption:', adoptionError);
+      }
+    }
 
     const { data, error } = await supabase
       .from('Animals')
       .update({
         status: 'adotado',
         adoptedAt: new Date().toISOString(),
-        adopterName,
-        adopterContact,
-        adopterNotes
+        adoptionId: adoptionId || null,
+        adopterName: adopterName || null,
+        adopterEmail: adopterEmail || null,
+        adopterPhone: adopterPhone || null
       })
       .eq('id', req.params.id)
       .select()

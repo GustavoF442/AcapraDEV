@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import axios from 'axios';
+import api from '../services/api';
 import { Heart, MapPin, Calendar, User, Shield, Award, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const AnimalDetail = () => {
@@ -10,7 +10,7 @@ const AnimalDetail = () => {
 
   const { data: animal, isLoading, error } = useQuery(
     ['animal', id],
-    () => axios.get(`/api/animals/${id}`).then(res => res.data),
+    () => api.get(`/animals/${id}`).then(res => res.data),
     { enabled: !!id }
   );
 

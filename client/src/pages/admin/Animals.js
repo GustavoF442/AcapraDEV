@@ -12,6 +12,9 @@ const AdminAnimals = () => {
     search: ''
   });
   const [page, setPage] = useState(1);
+  const [selectedAnimal, setSelectedAnimal] = useState(null);
+  const [adoptionRequests, setAdoptionRequests] = useState([]);
+  const [showAdoptionModal, setShowAdoptionModal] = useState(false);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery(
@@ -62,15 +65,43 @@ const AdminAnimals = () => {
     }
   };
 
-  const handleMarkAdopted = (animal) => {
-    const adopterName = prompt('Nome do adotante:');
-    const adopterContact = prompt('Contato do adotante:');
-    
-    if (adopterName && adopterContact) {
+  const handleMarkAdopted = async (animal) => {
+    try {
+      setSelectedAnimal(animal);
+      const response = await api.get(`/animals/${animal.id ?? animal._id}/adoptions`);
+      setAdoptionRequests(response.data.adoptions || []);
+      setShowAdoptionModal(true);
+    } catch (error) {
+      alert('Erro ao carregar solicitações de adoção');
+    }
+  };
+
+  const handleApproveAdoption = (adoption) => {
+    if (window.confirm(`Aprovar adoção para ${adoption.adopterName}?`)) {
       adoptMutation.mutate({
-        id: animal.id ?? animal._id,
-        data: { adopterName, adopterContact }
+        id: selectedAnimal.id ?? selectedAnimal._id,
+        data: {
+          adoptionId: adoption.id,
+          adopterName: adoption.adopterName,
+          adopterEmail: adoption.adopterEmail,
+          adopterPhone: adoption.adopterPhone
+        }
       });
+      setShowAdoptionModal(false);
+    }
+  };
+
+  const handleManualAdoption = () => {
+    const adopterName = prompt('Nome do adotante:');
+    const adopterEmail = prompt('Email do adotante:');
+    const adopterPhone = prompt('Telefone do adotante:');
+    
+    if (adopterName) {
+      adoptMutation.mutate({
+        id: selectedAnimal.id ?? selectedAnimal._id,
+        data: { adopterName, adopterEmail, adopterPhone }
+      });
+      setShowAdoptionModal(false);
     }
   };
 
@@ -310,6 +341,87 @@ const AdminAnimals = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de Solicitações de Adoção */}
+      {showAdoptionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Solicitações de Adoção - {selectedAnimal?.name}
+              </h2>
+              <button 
+                onClick={() => setShowAdoptionModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            {adoptionRequests.length > 0 ? (
+              <div className="space-y-4">
+                {adoptionRequests.map((adoption) => (
+                  <div key={adoption.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                <div className="grid grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Nome</p>
+                    <p className="font-semibold">{adoption.adopterName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-semibold">{adoption.adopterEmail}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Telefone</p>
+                    <p className="font-semibold">{adoption.adopterPhone}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Status</p>
+                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                      adoption.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
+                      adoption.status === 'aprovado' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {adoption.status}
+                    </span>
+                  </div>
+                </div>
+                
+                {adoption.motivation && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-600">Motivação</p>
+                    <p className="text-sm">{adoption.motivation}</p>
+                  </div>
+                )}
+
+                {adoption.status === 'pendente' && (
+                  <button
+                    onClick={() => handleApproveAdoption(adoption)}
+                    className="btn-primary mt-2"
+                  >
+                    Aprovar e Marcar como Adotado
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">Nenhuma solicitação de adoção para este animal</p>
+          </div>
+        )}
+
+        <div className="mt-6 pt-4 border-t">
+          <button
+            onClick={handleManualAdoption}
+            className="btn-secondary w-full"
+          >
+            Registrar Adoção Manual
+          </button>
+        </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

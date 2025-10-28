@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
+import api from '../services/api';
 import { Mail, Phone, MapPin, Clock, CheckCircle, Send } from 'lucide-react';
 
 const Contact = () => {
@@ -11,7 +11,7 @@ const Contact = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await axios.post('/contact', data);
+      await api.post('/contact', data);
       setSubmitted(true);
       reset();
     } catch (error) {

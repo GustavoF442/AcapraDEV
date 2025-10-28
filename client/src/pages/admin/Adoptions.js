@@ -20,7 +20,7 @@ export default function AdoptionsAdmin() {
       const p = new URLSearchParams();
       p.set('page', String(pg)); p.set('limit','10');
       if (st && st!=='all') p.set('status', st);
-      const { data } = await api.get(`/api/adoptions?${p.toString()}`);
+      const { data } = await api.get(`/adoptions?${p.toString()}`);
       setAdoptions(data?.adoptions || []);
       setPage(data?.pagination?.page || pg);
       setPages(data?.pagination?.pages || 1);
@@ -37,7 +37,7 @@ export default function AdoptionsAdmin() {
   const setStatusTo = async (id, newStatus) => {
     if (!window.confirm(`Confirmar ${newStatus} para #${id}?`)) return;
     try {
-      await api.patch(`/api/adoptions/${id}/status`, { status: newStatus });
+      await api.patch(`/adoptions/${id}/status`, { status: newStatus });
       await load(page, status);
     } catch (e) {
       alert(e?.response?.data?.message || 'Falha ao atualizar status');

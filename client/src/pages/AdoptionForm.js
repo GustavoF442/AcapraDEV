@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
+import api from '../services/api';
 import { Heart, ArrowLeft, CheckCircle } from 'lucide-react';
 import { resolveImageUrl } from '../utils/images';
 
@@ -16,14 +16,14 @@ const AdoptionForm = () => {
 
   const { data: animal, isLoading } = useQuery(
     ['animal', id],
-    () => axios.get(`/animals/${id}`).then(res => res.data),
+    () => api.get(`/animals/${id}`).then(res => res.data),
     { enabled: !!id }
   );
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await axios.post('/adoptions', {
+      await api.post('/adoptions', {
         animalId: id,
         ...data
       });
