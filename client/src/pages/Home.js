@@ -20,7 +20,7 @@ const Home = () => {
   );
 
   return (
-    <div className="min-h-screen relative">
+    <div className="relative">
       <AnimatedBackground />
       
       {/* Hero Section */}
@@ -278,6 +278,28 @@ const Home = () => {
           </div>
         </section>
       )}
+      
+      {/* Call to Action Final */}
+      <section className="relative py-20 bg-gradient-to-r from-purple-600 to-pink-600 overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Faça a Diferença Hoje
+          </h2>
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            Cada animal resgatado é uma vida transformada. Junte-se a nós nessa missão de amor e compaixão.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/animais" className="btn-primary bg-white text-purple-600 hover:bg-gray-100 text-lg px-8 py-4">
+              <Heart className="mr-2 h-5 w-5" />
+              Adotar um Animal
+            </Link>
+            <Link to="/doacoes" className="btn-secondary border-white text-white hover:bg-white hover:text-purple-600 text-lg px-8 py-4">
+              Fazer uma Doação
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

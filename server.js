@@ -524,29 +524,33 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 // Rota alternativa para stats admin (compatibilidade)
 app.get('/api/stats/admin', authenticateToken, async (req, res) => {
   try {
-    const [animalsResult, adoptionsResult, contactsResult, newsResult] = await Promise.all([
+    const [animalsResult, adoptionsResult, contactsResult, newsResult, recentAnimalsResult, recentAdoptionsResult, recentContactsResult] = await Promise.all([
       supabase.from('Animals').select('status', { count: 'exact' }),
       supabase.from('Adoptions').select('status', { count: 'exact' }),
       supabase.from('Contacts').select('status', { count: 'exact' }),
-      supabase.from('News').select('status', { count: 'exact' })
+      supabase.from('News').select('status', { count: 'exact' }),
+      supabase.from('Animals').select('*').order('createdAt', { ascending: false }).limit(6),
+      supabase.from('Adoptions').select('*, Animals(name)').order('createdAt', { ascending: false }).limit(5),
+      supabase.from('Contacts').select('*').order('createdAt', { ascending: false }).limit(5)
     ]);
 
     res.json({
-      animals: {
-        total: animalsResult.count || 0,
-        available: animalsResult.data?.filter(a => a.status === 'disponível').length || 0
+      dashboard: {
+        pendingAdoptions: adoptionsResult.data?.filter(a => a.status === 'pendente').length || 0,
+        adoptionsInReview: adoptionsResult.data?.filter(a => a.status === 'em análise').length || 0,
+        unreadContacts: contactsResult.data?.filter(c => c.status === 'novo').length || 0,
+        publishedNews: newsResult.data?.filter(n => n.status === 'publicado').length || 0
       },
-      adoptions: {
-        total: adoptionsResult.count || 0,
-        pending: adoptionsResult.data?.filter(a => a.status === 'pendente').length || 0
+      recentActivity: {
+        animals: recentAnimalsResult.data || [],
+        adoptions: recentAdoptionsResult.data || [],
+        contacts: recentContactsResult.data || []
       },
-      contacts: {
-        total: contactsResult.count || 0,
-        unread: contactsResult.data?.filter(c => c.status === 'novo').length || 0
-      },
-      news: {
-        total: newsResult.count || 0,
-        published: newsResult.data?.filter(n => n.status === 'publicado').length || 0
+      totals: {
+        animals: animalsResult.count || 0,
+        adoptions: adoptionsResult.count || 0,
+        contacts: contactsResult.count || 0,
+        news: newsResult.count || 0
       }
     });
 
