@@ -13,7 +13,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://acapra-frontend.onrender.com', 'https://acapra-dev.vercel.app']
+    ? ['https://acapradev.onrender.com', 'https://acapra-frontend.onrender.com', 'https://acapra-dev.vercel.app', 'https://acapra-platform.onrender.com']
     : ['http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true
 }));

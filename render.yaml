@@ -18,6 +18,16 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        value: postgres
+      - key: DB_PASSWORD
+        sync: false
 
   - type: web
     name: acapra-frontend
@@ -25,6 +35,11 @@ services:
     plan: free
     buildCommand: cd client && npm install && npm run build
     staticPublishPath: ./client/build
+    envVars:
+      - key: REACT_APP_SUPABASE_URL
+        sync: false
+      - key: REACT_APP_SUPABASE_ANON_KEY
+        sync: false
     routes:
       - type: rewrite
         source: /api/*
