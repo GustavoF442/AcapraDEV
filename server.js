@@ -10,7 +10,17 @@ const helmet = require('helmet');
 const app = express();
 
 // Middlewares básicos
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https://jjedtjerraejimhnudph.supabase.co"],
+      connectSrc: ["'self'", "https://jjedtjerraejimhnudph.supabase.co"]
+    }
+  }
+}));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://acapradev.onrender.com', 'https://acapra-frontend.onrender.com', 'https://acapra-dev.vercel.app', 'https://acapra-platform.onrender.com']
@@ -247,6 +257,33 @@ app.get('/api/news', async (req, res) => {
     res.status(500).json({
       error: 'Erro interno do servidor',
       details: error.message
+    });
+  }
+});
+
+// API Route - Stats (para o frontend público)
+app.get('/api/stats', async (req, res) => {
+  try {
+    const [animalsResult, adoptionsResult] = await Promise.all([
+      supabase.from('Animals').select('status', { count: 'exact' }),
+      supabase.from('Adoptions').select('status', { count: 'exact' })
+    ]);
+
+    res.json({
+      total: animalsResult.count || 0,
+      available: animalsResult.data?.filter(a => a.status === 'disponível').length || 0,
+      adopted: animalsResult.data?.filter(a => a.status === 'adotado').length || 0,
+      adoptions: adoptionsResult.count || 0
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      total: 0,
+      available: 0,
+      adopted: 0,
+      adoptions: 0
     });
   }
 });
