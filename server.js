@@ -20,18 +20,31 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Conectar ao PostgreSQL (Supabase) e sincronizar modelos
-const { sequelize, testConnection } = require('./config/database');
-require('./models'); // garante que os models são carregados
+// Usar apenas Supabase client - sem Sequelize
+const { createClient } = require('@supabase/supabase-js');
 
 const initDatabase = async () => {
   try {
-    await testConnection();
-    await sequelize.sync({ alter: true }); // alter: true para atualizar tabelas existentes
-    console.log('✅ Banco PostgreSQL sincronizado');
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+      throw new Error('Variáveis SUPABASE_URL e SUPABASE_SERVICE_KEY são obrigatórias');
+    }
+    
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    );
+    
+    // Teste simples de conexão
+    const { data, error } = await supabase.from('animals').select('count', { count: 'exact', head: true });
+    
+    if (error) {
+      throw new Error(`Erro ao conectar Supabase: ${error.message}`);
+    }
+    
+    console.log('✅ Supabase conectado com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao sincronizar banco:', error);
-    process.exit(1);
+    console.error('❌ Erro ao conectar Supabase:', error.message);
+    // Não sair do processo - continuar sem banco para debug
   }
 };
 initDatabase();
@@ -42,15 +55,14 @@ app.get('/api/placeholder/:w/:h', (req, res) => {
   res.redirect(`https://via.placeholder.com/${w}x${h}`);
 });
 
-// Rotas
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/animals', require('./routes/animals'));
-app.use('/api/adoptions', require('./routes/adoptions'));
-app.use('/api/news', require('./routes/news'));
-app.use('/api/contact', require('./routes/contact'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/stats', require('./routes/stats'));
-app.use('/api/setup', require('./routes/setup'));
+// Rotas básicas - sem Sequelize
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'API ACAPRA funcionando no Render!', 
+    timestamp: new Date(),
+    environment: process.env.NODE_ENV 
+  });
+});
 
 // Health
 app.get('/api/health', (_req, res) => {
