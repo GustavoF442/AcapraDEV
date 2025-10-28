@@ -1,22 +1,22 @@
 import React from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { ArrowRight, Heart, Users, Award, Sparkles, Star } from 'lucide-react';
 import AnimatedStats from '../components/AnimatedStats';
 import AnimatedBackground from '../components/AnimatedBackground';
 
 const Home = () => {
   const { data: stats } = useQuery('stats', () =>
-    axios.get('/api/stats').then(res => res.data)
+    api.get('/stats').then(res => res.data)
   );
 
   const { data: featuredAnimals } = useQuery('featuredAnimals', () =>
-    axios.get('/api/animals?limit=6').then(res => res.data.animals)
+    api.get('/animals?limit=6').then(res => res.data.animals)
   );
 
   const { data: latestNews } = useQuery('latestNews', () =>
-    axios.get('/api/news?limit=3').then(res => res.data.news)
+    api.get('/news?limit=3').then(res => res.data.news)
   );
 
   return (

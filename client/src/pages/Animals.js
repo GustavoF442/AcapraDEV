@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { Search, Filter, Heart, MapPin, Calendar, User, X } from 'lucide-react';
 import { resolveImageUrl } from '../utils/images';
 
@@ -31,7 +31,7 @@ const Animals = () => {
       params.append('page', page);
       params.append('limit', 12);
       
-      return axios.get(`/api/animals?${params}`).then(res => res.data);
+      return api.get(`/animals?${params}`).then(res => res.data);
     },
     { 
       keepPreviousData: true,

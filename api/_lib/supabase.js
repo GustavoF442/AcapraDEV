@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://jjedtjerraejimhnudph.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqZWR0amVycmFlamltaG51ZHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMDEwMjk2NSwiZXhwIjoyMDQ1Njc4OTY1fQ.YQJWTJGGTLdXJGJGJGJGJGJGJGJGJGJGJGJGJGJGJGJGJGJG';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('SUPABASE_URL e SUPABASE_SERVICE_KEY devem estar definidos no .env');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
