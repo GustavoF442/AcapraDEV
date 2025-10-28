@@ -69,6 +69,24 @@ app.get('/api/health', (_req, res) => {
   res.json({ message: 'API da ACAPRA funcionando!', timestamp: new Date() });
 });
 
+// Servir arquivos estáticos do React (apenas em produção)
+if (process.env.NODE_ENV === 'production') {
+  const path = require('path');
+  
+  // Servir arquivos estáticos do build do React
+  app.use(express.static(path.join(__dirname, 'client/build')));
+  
+  // Todas as rotas não-API devem retornar o index.html do React
+  app.get('*', (req, res) => {
+    // Se a rota começar com /api, não interceptar
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ message: 'API endpoint não encontrado' });
+    }
+    
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  });
+}
+
 // Handler de erro (depois das rotas)
 app.use((err, req, res, next) => {
   console.error(err.stack);
