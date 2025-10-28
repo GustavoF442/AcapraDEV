@@ -24,7 +24,7 @@ const Users = () => {
   );
 
   const toggleStatusMutation = useMutation(
-    ({ userId, status }) => axios.patch(`/api/users/${userId}/status`, { status }),
+    ({ userId, status }) => api.patch(`/users/${userId}/status`, { status }),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('users');
@@ -33,7 +33,7 @@ const Users = () => {
   );
 
   const deleteMutation = useMutation(
-    (userId) => axios.delete(`/api/users/${userId}`),
+    (userId) => api.delete(`/users/${userId}`),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('users');

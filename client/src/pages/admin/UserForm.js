@@ -44,9 +44,9 @@ const UserForm = () => {
   const mutation = useMutation(
     (data) => {
       if (isEdit) {
-        return axios.put(`/api/users/${id}`, data);
+        return api.put(`/users/${id}`, data);
       } else {
-        return axios.post('/api/users', data);
+        return api.post('/users', data);
       }
     },
     {

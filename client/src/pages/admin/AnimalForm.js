@@ -38,9 +38,9 @@ const AnimalForm = () => {
   const mutation = useMutation(
     (data) => {
       if (isEdit) {
-        return axios.put(`/api/animals/${id}`, data);
+        return api.put(`/animals/${id}`, data);
       } else {
-        return axios.post('/api/animals', data);
+        return api.post('/animals', data);
       }
     },
     {
@@ -68,7 +68,7 @@ const AnimalForm = () => {
     const photo = photos[index];
     if (photo.path) {
       try {
-        await axios.delete(`/api/animals/photo/${photo.path}`);
+        await api.delete(`/animals/photo/${photo.path}`);
       } catch (error) {
         console.error('Erro ao remover imagem:', error);
       }

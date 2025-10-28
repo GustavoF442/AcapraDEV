@@ -23,7 +23,7 @@ const AdminContacts = () => {
   );
 
   const respondMutation = useMutation(
-    ({ id, response }) => axios.patch(`/api/contact/${id}/respond`, { response }),
+    ({ id, response }) => api.patch(`/contact/${id}/respond`, { response }),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('contacts');

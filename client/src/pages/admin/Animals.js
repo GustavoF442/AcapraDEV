@@ -29,7 +29,7 @@ const AdminAnimals = () => {
   );
 
   const deleteMutation = useMutation(
-    (id) => axios.delete(`/api/animals/${id}`),
+    (id) => api.delete(`/animals/${id}`),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('adminAnimals');
@@ -42,7 +42,7 @@ const AdminAnimals = () => {
   );
 
   const adoptMutation = useMutation(
-    ({ id, data }) => axios.patch(`/api/animals/${id}/adopt`, data),
+    ({ id, data }) => api.patch(`/animals/${id}/adopt`, data),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('adminAnimals');
