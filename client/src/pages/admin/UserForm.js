@@ -60,37 +60,41 @@ const UserForm = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      // Processar permissões
-      const permissions = {};
-      Object.keys(data).forEach(key => {
-        if (key.startsWith('permissions.')) {
-          const permissionKey = key.replace('permissions.', '');
-          permissions[permissionKey] = data[key];
-          delete data[key];
-        }
-      });
-
+      // Limpar campos que não devem ser enviados
       const payload = {
-        ...data,
-        permissions,
+        name: data.name,
+        email: data.email,
+        role: data.role || 'user',
         status: data.status || 'active'
       };
 
       // Se não for edição ou se a senha foi preenchida
-      if (!isEdit || data.password) {
+      if (!isEdit) {
+        // Criar usuário - senha obrigatória
+        if (!data.password) {
+          alert('Senha é obrigatória para criar usuário');
+          return;
+        }
         if (data.password !== data.confirmPassword) {
           alert('As senhas não coincidem');
           return;
         }
+        payload.password = data.password;
       } else {
-        // Remove senha se estiver vazia na edição
-        delete payload.password;
-        delete payload.confirmPassword;
+        // Editar - senha opcional
+        if (data.password) {
+          if (data.password !== data.confirmPassword) {
+            alert('As senhas não coincidem');
+            return;
+          }
+          payload.password = data.password;
+        }
       }
 
       await mutation.mutateAsync(payload);
     } catch (error) {
-      alert(error?.response?.data?.message || 'Erro ao salvar usuário');
+      console.error('Erro ao salvar:', error);
+      alert(error?.response?.data?.error || error?.response?.data?.message || 'Erro ao salvar usuário');
     } finally {
       setIsSubmitting(false);
     }

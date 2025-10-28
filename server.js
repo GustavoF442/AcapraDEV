@@ -370,7 +370,8 @@ app.post('/api/contact', async (req, res) => {
         subject,
         message,
         status: 'novo',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }])
       .select()
       .single();
@@ -462,7 +463,8 @@ app.post('/api/adoptions', async (req, res) => {
         vetInfo: vetInfo || null,
         emergencyPlan: emergencyPlan || null,
         status: 'pendente',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }])
       .select()
       .single();
@@ -848,7 +850,8 @@ app.post('/api/users', authenticateToken, adminOnly, async (req, res) => {
         password: hashedPassword,
         role: role || 'user',
         status: status || 'active',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }])
       .select()
       .single();
@@ -1070,7 +1073,9 @@ app.post('/api/news', authenticateToken, async (req, res) => {
         tags: tags || [],
         image,
         authorId: req.user.id,
+        views: 0,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         publishedAt: status === 'publicado' ? new Date().toISOString() : null
       }])
       .select()
