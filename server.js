@@ -252,6 +252,233 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
+// ========== ROTAS ADMINISTRATIVAS ==========
+
+// Login Admin
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+
+    // Buscar usuário no Supabase
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .limit(1);
+
+    if (error || !users || users.length === 0) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    const user = users[0];
+
+    // Verificar senha (assumindo que está hasheada com bcrypt)
+    const bcrypt = require('bcryptjs');
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    // Gerar JWT
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      message: 'Login realizado com sucesso',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro no login:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Middleware de autenticação
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token não fornecido' });
+  }
+
+  const jwt = require('jsonwebtoken');
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// Middleware admin only
+const adminOnly = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
+  }
+  next();
+};
+
+// Dashboard Stats (Admin)
+app.get('/api/admin/stats', authenticateToken, async (req, res) => {
+  try {
+    const [animalsResult, adoptionsResult, contactsResult, newsResult] = await Promise.all([
+      supabase.from('animals').select('status', { count: 'exact' }),
+      supabase.from('adoptions').select('status', { count: 'exact' }),
+      supabase.from('contacts').select('status', { count: 'exact' }),
+      supabase.from('news').select('published', { count: 'exact' })
+    ]);
+
+    res.json({
+      animals: {
+        total: animalsResult.count || 0,
+        available: animalsResult.data?.filter(a => a.status === 'disponível').length || 0
+      },
+      adoptions: {
+        total: adoptionsResult.count || 0,
+        pending: adoptionsResult.data?.filter(a => a.status === 'pendente').length || 0
+      },
+      contacts: {
+        total: contactsResult.count || 0,
+        unread: contactsResult.data?.filter(c => c.status === 'novo').length || 0
+      },
+      news: {
+        total: newsResult.count || 0,
+        published: newsResult.data?.filter(n => n.published === true).length || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Listar Animais (Admin)
+app.get('/api/admin/animals', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('animals')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      animals: data || [],
+      total: count || 0,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil((count || 0) / limit)
+    });
+
+  } catch (error) {
+    console.error('Erro ao listar animais admin:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Listar Adoções (Admin)
+app.get('/api/admin/adoptions', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('adoptions')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      adoptions: data || [],
+      total: count || 0,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil((count || 0) / limit)
+    });
+
+  } catch (error) {
+    console.error('Erro ao listar adoções admin:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Listar Contatos (Admin)
+app.get('/api/admin/contacts', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('contacts')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      contacts: data || [],
+      total: count || 0,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil((count || 0) / limit)
+    });
+
+  } catch (error) {
+    console.error('Erro ao listar contatos admin:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Servir arquivos estáticos do React (apenas em produção)
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
