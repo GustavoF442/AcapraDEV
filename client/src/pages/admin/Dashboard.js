@@ -1,12 +1,12 @@
 import React from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { Users, Heart, FileText, Mail, Shield } from 'lucide-react';
 
 const Dashboard = () => {
   const { data: stats, isLoading } = useQuery('adminStats', () =>
-    axios.get('/stats/admin').then(res => res.data)
+    api.get('/stats/admin').then(res => res.data)
   );
 
   if (isLoading) {

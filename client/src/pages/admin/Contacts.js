@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import axios from 'axios';
+import api from '../../services/api';
 import { Eye, Mail, Phone, User, Calendar, MessageSquare } from 'lucide-react';
 
 const AdminContacts = () => {
@@ -17,7 +17,7 @@ const AdminContacts = () => {
       params.append('page', page);
       params.append('limit', 10);
       
-      return axios.get(`/api/contact?${params}`).then(res => res.data);
+      return api.get(`/contact?${params}`).then(res => res.data);
     },
     { keepPreviousData: true }
   );

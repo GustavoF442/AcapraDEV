@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { Plus, Search, Edit, Trash2, Heart, MapPin } from 'lucide-react';
 
 const AdminAnimals = () => {
@@ -23,7 +23,7 @@ const AdminAnimals = () => {
       params.append('page', page);
       params.append('limit', 10);
       
-      return axios.get(`/api/animals?${params}`).then(res => res.data);
+      return api.get(`/animals?${params}`).then(res => res.data);
     },
     { keepPreviousData: true }
   );

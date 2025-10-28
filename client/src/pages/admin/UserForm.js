@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import axios from 'axios';
+import api from '../../services/api';
 import { Save, ArrowLeft, Shield, User, Mail, Phone, Building } from 'lucide-react';
 
 const UserForm = () => {
@@ -20,7 +20,7 @@ const UserForm = () => {
   // Carregar dados do usuário para edição
   useQuery(
     ['user', id],
-    () => axios.get(`/api/users/${id}`).then(res => res.data),
+    () => api.get(`/users/${id}`).then(res => res.data),
     { 
       enabled: isEdit,
       onSuccess: (data) => {

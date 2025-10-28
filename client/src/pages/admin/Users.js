@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { Plus, Search, Edit, Trash2, UserCheck, UserX, Shield, Phone, Mail, Calendar } from 'lucide-react';
 
 const Users = () => {
@@ -18,7 +18,7 @@ const Users = () => {
       if (roleFilter) params.append('role', roleFilter);
       if (statusFilter) params.append('status', statusFilter);
       
-      return axios.get(`/api/users?${params}`).then(res => res.data);
+      return api.get(`/users?${params}`).then(res => res.data);
     },
     { keepPreviousData: true }
   );

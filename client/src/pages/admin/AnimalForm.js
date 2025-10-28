@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import axios from 'axios';
+import api from '../../services/api';
 import { Save, ArrowLeft, Upload, X, Eye, Star } from 'lucide-react';
 import { resolveImageUrl } from '../../utils/images';
 
@@ -20,7 +20,7 @@ const AnimalForm = () => {
   // Carregar dados do animal para edição
   useQuery(
     ['animal', id],
-    () => axios.get(`/api/animals/${id}`).then(res => res.data),
+    () => api.get(`/animals/${id}`).then(res => res.data),
     { 
       enabled: isEdit,
       onSuccess: (data) => {
