@@ -71,6 +71,10 @@ Chamar `api.get('/api/xxx')` resulta em `/api/api/xxx` - ERRO 404!
 ✅ DELETE /api/animals/:id
 ✅ PATCH /api/animals/:id/adopt ⭐ MELHORADO
 
+### 5️⃣ Endpoint de Adoções:
+- ✅ **POST /api/adoptions** - Campos atualizados para camelCase (adopterName, adopterEmail, etc.)
+- ✅ Todos os campos do formulário agora são aceitos corretamente
+
 ## 🚀 PRÓXIMO PASSO:
 ```bash
 git add .

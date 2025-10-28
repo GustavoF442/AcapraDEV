@@ -395,25 +395,30 @@ app.post('/api/contact', async (req, res) => {
 app.post('/api/adoptions', async (req, res) => {
   try {
     const { 
-      animalId, 
-      adopter_name, 
-      adopter_email, 
-      adopter_phone, 
-      adopter_address,
-      adopter_city,
-      adopter_state,
-      adopter_zipcode,
+      animalId,
+      adopterName,
+      adopterEmail,
+      adopterPhone,
+      adopterCpf,
+      adopterAddress,
+      adopterCity,
+      adopterState,
+      housingType,
+      hasYard,
+      isRented,
+      ownerConsent,
+      hadPetsBefore,
+      currentPets,
+      petCareExperience,
       motivation,
-      experience,
-      housing_type,
-      has_yard,
-      other_pets,
-      family_members,
-      work_schedule,
-      emergency_contact
+      timeForPet,
+      whoWillCare,
+      hasVet,
+      vetInfo,
+      emergencyPlan
     } = req.body;
 
-    if (!animalId || !adopter_name || !adopter_email || !adopter_phone || !motivation) {
+    if (!animalId || !adopterName || !adopterEmail || !adopterPhone || !motivation) {
       return res.status(400).json({ error: 'Campos obrigatórios não preenchidos' });
     }
 
@@ -436,21 +441,26 @@ app.post('/api/adoptions', async (req, res) => {
       .from('Adoptions')
       .insert([{
         animalId: parseInt(animalId),
-        adopter_name,
-        adopter_email,
-        adopter_phone,
-        adopter_address,
-        adopter_city,
-        adopter_state,
-        adopter_zipcode,
+        adopterName,
+        adopterEmail,
+        adopterPhone,
+        adopterCpf: adopterCpf || null,
+        adopterAddress: adopterAddress || null,
+        adopterCity: adopterCity || null,
+        adopterState: adopterState || null,
+        housingType: housingType || null,
+        hasYard: hasYard || false,
+        isRented: isRented || false,
+        ownerConsent: ownerConsent || false,
+        hadPetsBefore: hadPetsBefore || false,
+        currentPets: currentPets || null,
+        petCareExperience: petCareExperience || null,
         motivation,
-        experience,
-        housing_type,
-        has_yard,
-        other_pets,
-        family_members,
-        work_schedule,
-        emergency_contact,
+        timeForPet: timeForPet || null,
+        whoWillCare: whoWillCare || null,
+        hasVet: hasVet || false,
+        vetInfo: vetInfo || null,
+        emergencyPlan: emergencyPlan || null,
         status: 'pendente',
         createdAt: new Date().toISOString()
       }])
@@ -459,7 +469,7 @@ app.post('/api/adoptions', async (req, res) => {
 
     if (error) {
       console.error('Erro ao criar solicitação de adoção:', error);
-      return res.status(500).json({ error: 'Erro ao enviar solicitação de adoção' });
+      return res.status(500).json({ error: 'Erro ao enviar solicitação de adoção: ' + error.message });
     }
 
     res.status(201).json({ 
