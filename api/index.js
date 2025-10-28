@@ -148,15 +148,26 @@ export default async function handler(req, res) {
 
     // 404 para rotas não encontradas
     return res.status(404).json({
-      message: 'Rota não encontrada',
-      path: url
+      error: 'Endpoint não encontrado',
+      path: url,
+      method: method,
+      message: 'Esta rota da API não existe. Verifique a documentação.',
+      timestamp: new Date().toISOString(),
+      availableEndpoints: [
+        'GET /api/health',
+        'GET /api/animals',
+        'GET /api/news',
+        'GET /api/stats'
+      ]
     });
 
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('🔴 API Error:', error);
     return res.status(500).json({
-      message: 'Erro interno do servidor',
-      error: error.message
+      error: 'Erro interno do servidor',
+      message: 'Algo deu errado ao processar sua requisição',
+      details: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 }

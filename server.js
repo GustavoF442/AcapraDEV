@@ -134,7 +134,12 @@ app.get('/api/test', (req, res) => {
 
 // Health
 app.get('/api/health', (_req, res) => {
-  res.json({ message: 'API da ACAPRA funcionando!', timestamp: new Date() });
+  res.json({ 
+    message: 'API da ACAPRA funcionando!', 
+    timestamp: new Date(),
+    version: '2.0-debug',
+    publicRoutesActive: true
+  });
 });
 
 // Debug endpoint para verificar arquivos estáticos
@@ -392,8 +397,12 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// Adoptions - Solicitar adoção (público)
+// Adoptions - Solicitar adoção (público) - SEM AUTENTICAÇÃO
 app.post('/api/adoptions', async (req, res) => {
+  console.log('🔵 PUBLIC ADOPTION ROUTE HIT - No auth required');
+  console.log('Body:', Object.keys(req.body));
+  console.log('Headers:', req.headers.authorization ? 'Has auth header' : 'No auth header');
+  
   try {
     const { 
       animalId,
@@ -420,6 +429,7 @@ app.post('/api/adoptions', async (req, res) => {
     } = req.body;
 
     if (!animalId || !adopterName || !adopterEmail || !adopterPhone || !motivation) {
+      console.log('❌ Missing required fields');
       return res.status(400).json({ error: 'Campos obrigatórios não preenchidos' });
     }
 
@@ -544,19 +554,23 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Middleware de autenticação
 const authenticateToken = (req, res, next) => {
+  console.log('🔒 Auth middleware triggered for:', req.method, req.path);
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
+    console.log('❌ No token provided for protected route:', req.path);
     return res.status(401).json({ error: 'Token não fornecido' });
   }
 
   const jwt = require('jsonwebtoken');
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
+      console.log('❌ Invalid token for:', req.path);
       return res.status(403).json({ error: 'Token inválido' });
     }
     req.user = user;
+    console.log('✅ Token valid for user:', user.id);
     next();
   });
 };
@@ -1505,6 +1519,308 @@ app.patch('/api/animals/:id/adopt', authenticateToken, async (req, res) => {
   }
 });
 
+// ========== ROTAS DE DOAÇÕES E FINANÇAS ==========
+
+// Donations - Listar todas as doações (Admin)
+app.get('/api/donations', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status, type } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('Donations')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('donatedAt', { ascending: false });
+
+    if (status) query = query.eq('status', status);
+    if (type) query = query.eq('type', type);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('Erro ao buscar doações:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      donations: data || [],
+      pagination: {
+        total: count || 0,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil((count || 0) / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Erro na API donations:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Donations - Criar nova doação
+app.post('/api/donations', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Donations')
+      .insert([{
+        ...req.body,
+        confirmedBy: req.user.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao criar doação:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(201).json({ message: 'Doação registrada com sucesso', donation: data });
+  } catch (error) {
+    console.error('Erro na API donations:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Donations - Atualizar doação
+app.put('/api/donations/:id', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Donations')
+      .update({
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao atualizar doação:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Doação atualizada com sucesso', donation: data });
+  } catch (error) {
+    console.error('Erro na API donations:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Donations - Deletar doação
+app.delete('/api/donations/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('Donations')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Doação removida com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar doação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Financial Transactions - Listar transações
+app.get('/api/financial-transactions', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, type, category, startDate, endDate } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('FinancialTransactions')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('transactionDate', { ascending: false });
+
+    if (type) query = query.eq('type', type);
+    if (category) query = query.eq('category', category);
+    if (startDate) query = query.gte('transactionDate', startDate);
+    if (endDate) query = query.lte('transactionDate', endDate);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('Erro ao buscar transações:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      transactions: data || [],
+      pagination: {
+        total: count || 0,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil((count || 0) / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Erro na API financial-transactions:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Financial Transactions - Criar transação
+app.post('/api/financial-transactions', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('FinancialTransactions')
+      .insert([{
+        ...req.body,
+        createdBy: req.user.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao criar transação:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(201).json({ message: 'Transação registrada com sucesso', transaction: data });
+  } catch (error) {
+    console.error('Erro na API financial-transactions:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Financial Transactions - Atualizar transação
+app.put('/api/financial-transactions/:id', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('FinancialTransactions')
+      .update({
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao atualizar transação:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Transação atualizada com sucesso', transaction: data });
+  } catch (error) {
+    console.error('Erro na API financial-transactions:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Financial Transactions - Deletar transação
+app.delete('/api/financial-transactions/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('FinancialTransactions')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Transação removida com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar transação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Financial Stats - Resumo financeiro
+app.get('/api/financial-stats', authenticateToken, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    let transactionsQuery = supabase.from('FinancialTransactions').select('type, amount');
+    let donationsQuery = supabase.from('Donations').select('amount, status');
+
+    if (startDate) {
+      transactionsQuery = transactionsQuery.gte('transactionDate', startDate);
+      donationsQuery = donationsQuery.gte('donatedAt', startDate);
+    }
+    if (endDate) {
+      transactionsQuery = transactionsQuery.lte('transactionDate', endDate);
+      donationsQuery = donationsQuery.lte('donatedAt', endDate);
+    }
+
+    const [transactionsResult, donationsResult] = await Promise.all([
+      transactionsQuery,
+      donationsQuery.eq('status', 'confirmado')
+    ]);
+
+    const transactions = transactionsResult.data || [];
+    const donations = donationsResult.data || [];
+
+    const receitas = transactions.filter(t => t.type === 'receita').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    const despesas = transactions.filter(t => t.type === 'despesa').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    const doacoes = donations.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+    const saldo = receitas - despesas;
+
+    res.json({
+      receitas: receitas.toFixed(2),
+      despesas: despesas.toFixed(2),
+      doacoes: doacoes.toFixed(2),
+      saldo: saldo.toFixed(2),
+      totalTransacoes: transactions.length,
+      totalDoacoes: donations.length
+    });
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas financeiras:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Handler para rotas de API não encontradas (todos os ambientes)
+app.all('/api/*', (req, res) => {
+  console.log('❌ 404 - API endpoint não encontrado:', req.method, req.path);
+  return res.status(404).json({ 
+    error: 'Endpoint não encontrado',
+    path: req.path,
+    method: req.method,
+    message: 'Esta rota da API não existe. Verifique a documentação da API.',
+    timestamp: new Date().toISOString(),
+    availableEndpoints: {
+      public: [
+        'GET /api/health',
+        'GET /api/animals',
+        'GET /api/animals/:id',
+        'GET /api/news',
+        'GET /api/stats',
+        'POST /api/contact',
+        'POST /api/adoptions'
+      ],
+      authenticated: [
+        'POST /api/auth/login',
+        'GET /api/auth/me',
+        'GET /api/admin/stats',
+        'GET /api/admin/animals',
+        'GET /api/admin/adoptions',
+        'GET /api/admin/contacts',
+        'GET /api/users',
+        'POST /api/users',
+        'PUT /api/animals/:id',
+        'DELETE /api/animals/:id',
+        'GET /api/adoptions',
+        'PATCH /api/adoptions/:id/status',
+        'POST /api/news',
+        'PUT /api/news/:id',
+        'DELETE /api/news/:id'
+      ]
+    }
+  });
+});
+
 // Servir arquivos estáticos do React (apenas em produção)
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
@@ -1514,21 +1830,18 @@ if (process.env.NODE_ENV === 'production') {
   
   // Todas as rotas não-API devem retornar o index.html do React
   app.get('*', (req, res) => {
-    // Se a rota começar com /api, não interceptar
-    if (req.path.startsWith('/api')) {
-      return res.status(404).json({ message: 'API endpoint não encontrado' });
-    }
-    
     res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
   });
 }
 
 // Handler de erro (depois das rotas)
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('🔴 Erro no servidor:', err.stack);
   res.status(500).json({
-    message: 'Algo deu errado!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
+    error: 'Erro interno do servidor',
+    message: 'Algo deu errado ao processar sua requisição',
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    timestamp: new Date().toISOString()
   });
 });
 

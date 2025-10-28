@@ -25,9 +25,9 @@ const AdminAnimals = () => {
         if (value) params.append(key, value);
       });
       params.append('page', page);
-      params.append('limit', 10);
+      params.append('limit', 20);
       
-      return api.get(`/animals?${params}`).then(res => res.data);
+      return api.get(`/admin/animals?${params}`).then(res => res.data);
     },
     { keepPreviousData: true }
   );

@@ -170,7 +170,7 @@ const Users = () => {
             ))}
           </div>
         </div>
-      ) : users?.length > 0 ? (
+      ) : users?.users?.length > 0 ? (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -197,7 +197,7 @@ const Users = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
+                {users.users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">

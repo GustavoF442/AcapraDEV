@@ -22,6 +22,7 @@ import AdminAdoptions from './pages/admin/Adoptions';
 import AdminNews from './pages/admin/News';
 import AdminContacts from './pages/admin/Contacts';
 import AdminUsers from './pages/admin/Users';
+import AdminFinancial from './pages/admin/Financial';
 import AnimalForm from './pages/admin/AnimalForm';
 import NewsForm from './pages/admin/NewsForm';
 import UserForm from './pages/admin/UserForm';
@@ -109,6 +110,11 @@ function App() {
                     <UserForm />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin/financeiro" element={
+                  <ProtectedRoute>
+                    <AdminFinancial />
+                  </ProtectedRoute>
+                } />
                 <Route path="/admin/animais/novo" element={
                   <ProtectedRoute>
                     <AnimalForm />
@@ -117,16 +123,6 @@ function App() {
                 <Route path="/admin/animais/editar/:id" element={
                   <ProtectedRoute>
                     <AnimalForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/noticias/nova" element={
-                  <ProtectedRoute>
-                    <NewsForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/noticias/editar/:id" element={
-                  <ProtectedRoute>
-                    <NewsForm />
                   </ProtectedRoute>
                 } />
               </Routes>

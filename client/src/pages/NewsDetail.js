@@ -89,9 +89,13 @@ const NewsDetail = () => {
           {article.image && (
             <div className="w-full h-64 md:h-96">
               <img
-                src={`/uploads/${article.image.path}`}
+                src={typeof article.image === 'string' ? article.image : (article.image.url || article.image.path || `/uploads/${article.image.path}`)}
                 alt={article.title}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.style.display = 'none';
+                }}
               />
             </div>
           )}

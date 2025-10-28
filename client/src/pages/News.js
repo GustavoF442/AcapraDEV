@@ -71,14 +71,24 @@ const News = () => {
         ) : data?.news?.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {data.news.map((article) => (
-                <article key={article._id} className="card hover:shadow-lg transition-shadow group">
+              {data.news.map((article) => {
+                const articleId = article.id || article._id;
+                const imageUrl = article.image 
+                  ? (typeof article.image === 'string' ? article.image : article.image.url || article.image.path || `/uploads/${article.image.path}`)
+                  : null;
+                
+                return (
+                <article key={articleId} className="card hover:shadow-lg transition-shadow group">
                   <div className="relative overflow-hidden">
-                    {article.image ? (
+                    {imageUrl ? (
                       <img
-                        src={`/uploads/${article.image.path}`}
+                        src={imageUrl}
                         alt={article.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext fill="%236b7280" font-family="sans-serif" font-size="18" dy="10.5" font-weight="bold" x="50%25" y="50%25" text-anchor="middle"%3EACAPRA%3C/text%3E%3C/svg%3E';
+                        }}
                       />
                     ) : (
                       <div className="w-full h-48 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
@@ -118,7 +128,7 @@ const News = () => {
 
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <Link
-                        to={`/noticias/${article._id}`}
+                        to={`/noticias/${articleId}`}
                         className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium"
                       >
                         Ler matéria completa
@@ -127,7 +137,8 @@ const News = () => {
                     </div>
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
 
             {/* Paginação */}

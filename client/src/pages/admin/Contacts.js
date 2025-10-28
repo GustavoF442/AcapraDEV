@@ -5,6 +5,8 @@ import { Eye, Mail, Phone, User, Calendar, MessageSquare } from 'lucide-react';
 
 const AdminContacts = () => {
   const [selectedContact, setSelectedContact] = useState(null);
+  const [showResponseModal, setShowResponseModal] = useState(false);
+  const [responseText, setResponseText] = useState('');
   const [filters, setFilters] = useState({ status: '' });
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
@@ -27,23 +29,41 @@ const AdminContacts = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries('contacts');
+        setShowResponseModal(false);
+        setResponseText('');
         setSelectedContact(null);
-        alert('Resposta registrada com sucesso!');
+        alert('Resposta registrada com sucesso! Agora você pode enviar o email manualmente para o contato.');
       },
-      onError: () => {
-        alert('Erro ao registrar resposta');
+      onError: (error) => {
+        console.error('Erro ao registrar resposta:', error);
+        alert('Erro ao registrar resposta: ' + (error.response?.data?.error || error.message));
       }
     }
   );
 
-  const handleRespond = (contact) => {
-    const response = prompt('Digite sua resposta:');
-    if (response) {
-      respondMutation.mutate({
-        id: contact._id,
-        response
-      });
+  const handleOpenResponseModal = (contact) => {
+    const contactId = contact.id || contact._id;
+    if (!contactId) {
+      alert('Erro: ID do contato não encontrado');
+      console.error('Contact object:', contact);
+      return;
     }
+    setSelectedContact(contact);
+    setResponseText('');
+    setShowResponseModal(true);
+  };
+
+  const handleSubmitResponse = () => {
+    if (!responseText.trim()) {
+      alert('Por favor, digite uma resposta válida');
+      return;
+    }
+    
+    const contactId = selectedContact.id || selectedContact._id;
+    respondMutation.mutate({
+      id: contactId,
+      response: responseText.trim()
+    });
   };
 
   const getStatusColor = (status) => {
@@ -118,7 +138,7 @@ const AdminContacts = () => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {data.contacts.map((contact) => (
-                      <tr key={contact._id} className="hover:bg-gray-50">
+                      <tr key={contact.id || contact._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
@@ -168,7 +188,7 @@ const AdminContacts = () => {
                             </button>
                             {contact.status !== 'respondido' && (
                               <button
-                                onClick={() => handleRespond(contact)}
+                                onClick={() => handleOpenResponseModal(contact)}
                                 className="text-green-600 hover:text-green-900"
                                 title="Responder"
                               >
@@ -324,13 +344,101 @@ const AdminContacts = () => {
                 {selectedContact.status !== 'respondido' && (
                   <div className="flex space-x-3 pt-4 border-t">
                     <button
-                      onClick={() => handleRespond(selectedContact)}
+                      onClick={() => {
+                        setShowResponseModal(true);
+                        setResponseText('');
+                      }}
                       className="btn-primary flex-1"
                     >
                       Registrar Resposta
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Resposta */}
+      {showResponseModal && selectedContact && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Registrar Resposta - {selectedContact.name}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowResponseModal(false);
+                    setResponseText('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Info do Contato */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="font-medium">Email:</span> {selectedContact.email}
+                    </div>
+                    {selectedContact.phone && (
+                      <div>
+                        <span className="font-medium">Telefone:</span> {selectedContact.phone}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-2">
+                    <span className="font-medium text-sm">Assunto:</span>
+                    <p className="text-sm text-gray-700 mt-1">{selectedContact.subject}</p>
+                  </div>
+                  <div className="mt-2">
+                    <span className="font-medium text-sm">Mensagem:</span>
+                    <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{selectedContact.message}</p>
+                  </div>
+                </div>
+
+                {/* Textarea para Resposta */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sua Resposta *
+                  </label>
+                  <textarea
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    rows="6"
+                    className="input-field resize-none"
+                    placeholder="Digite sua resposta aqui. Esta resposta será registrada no sistema e você deverá enviar o email manualmente para o contato."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    ⚠️ Importante: Após salvar, envie um email manualmente para {selectedContact.email} com esta resposta.
+                  </p>
+                </div>
+
+                {/* Botões */}
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    onClick={() => {
+                      setShowResponseModal(false);
+                      setResponseText('');
+                    }}
+                    className="btn-secondary flex-1"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSubmitResponse}
+                    disabled={!responseText.trim() || respondMutation.isLoading}
+                    className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {respondMutation.isLoading ? 'Salvando...' : 'Salvar Resposta'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
