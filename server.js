@@ -135,8 +135,7 @@ app.get('/api/test-supabase', async (_req, res) => {
   }
 });
 
-// Criar cliente Supabase global
-const { createClient } = require('@supabase/supabase-js');
+// Criar cliente Supabase global (reutilizar do topo do arquivo)
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
