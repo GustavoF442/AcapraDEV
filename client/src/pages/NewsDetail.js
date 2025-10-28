@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useQuery } from 'react-query';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { Calendar, User, Eye, ArrowLeft, Share2 } from 'lucide-react';
 
 const NewsDetail = () => {
@@ -9,14 +9,14 @@ const NewsDetail = () => {
 
   const { data: article, isLoading, error } = useQuery(
     ['news', id],
-    () => axios.get(`/api/news/${id}`).then(res => res.data),
+    () => api.get(`/news/${id}`).then(res => res.data),
     { enabled: !!id }
   );
 
   // Incrementar visualizações quando a página carregar
   useEffect(() => {
     if (id) {
-      axios.patch(`/api/news/${id}/view`).catch(() => {});
+      api.patch(`/news/${id}/view`).catch(() => {});
     }
   }, [id]);
 

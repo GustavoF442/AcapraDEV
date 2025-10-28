@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { Calendar, User, Eye, Search, ArrowRight } from 'lucide-react';
 
 const News = () => {
@@ -16,7 +16,7 @@ const News = () => {
       params.append('page', page);
       params.append('limit', 9);
       
-      return axios.get(`/api/news?${params}`).then(res => res.data);
+      return api.get(`/news?${params}`).then(res => res.data);
     },
     { keepPreviousData: true }
   );
