@@ -84,8 +84,55 @@ app.get('/api/debug', (_req, res) => {
     indexExists: fs.existsSync(indexPath),
     buildPath: buildPath,
     indexPath: indexPath,
+    supabaseUrl: process.env.SUPABASE_URL ? 'Configurada' : 'FALTANDO',
+    supabaseKey: process.env.SUPABASE_SERVICE_KEY ? 'Configurada' : 'FALTANDO',
     timestamp: new Date()
   });
+});
+
+// Endpoint específico para testar Supabase
+app.get('/api/test-supabase', async (_req, res) => {
+  try {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+      return res.status(500).json({
+        error: 'Variáveis SUPABASE_URL ou SUPABASE_SERVICE_KEY não configuradas',
+        supabaseUrl: !!process.env.SUPABASE_URL,
+        supabaseKey: !!process.env.SUPABASE_SERVICE_KEY
+      });
+    }
+
+    const { createClient } = require('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    );
+
+    // Teste simples de conexão
+    const { data, error } = await supabase
+      .from('animals')
+      .select('count', { count: 'exact', head: true });
+
+    if (error) {
+      return res.status(500).json({
+        error: 'Erro na consulta Supabase',
+        details: error.message,
+        code: error.code
+      });
+    }
+
+    res.json({
+      message: 'Conexão Supabase OK!',
+      supabaseUrl: process.env.SUPABASE_URL,
+      timestamp: new Date()
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: 'Erro ao conectar Supabase',
+      details: error.message,
+      timestamp: new Date()
+    });
+  }
 });
 
 // Servir arquivos estáticos do React (apenas em produção)
