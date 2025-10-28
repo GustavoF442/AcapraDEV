@@ -16,14 +16,14 @@ const AdoptionForm = () => {
 
   const { data: animal, isLoading } = useQuery(
     ['animal', id],
-    () => axios.get(`/api/animals/${id}`).then(res => res.data),
+    () => axios.get(`/animals/${id}`).then(res => res.data),
     { enabled: !!id }
   );
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await axios.post('/api/adoptions', {
+      await axios.post('/adoptions', {
         animalId: id,
         ...data
       });

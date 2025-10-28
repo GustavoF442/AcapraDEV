@@ -11,7 +11,7 @@ const Contact = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await axios.post('/api/contact', data);
+      await axios.post('/contact', data);
       setSubmitted(true);
       reset();
     } catch (error) {

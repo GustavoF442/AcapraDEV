@@ -6,7 +6,7 @@ import { Users, Heart, FileText, Mail, Shield } from 'lucide-react';
 
 const Dashboard = () => {
   const { data: stats, isLoading } = useQuery('adminStats', () =>
-    axios.get('/api/stats/admin').then(res => res.data)
+    axios.get('/stats/admin').then(res => res.data)
   );
 
   if (isLoading) {
