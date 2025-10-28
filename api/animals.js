@@ -23,7 +23,6 @@ export default async function handler(req, res) {
     const { data: animals, error, count } = await supabase
       .from('animals')
       .select('*', { count: 'exact' })
-      .eq('status', 'available')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 

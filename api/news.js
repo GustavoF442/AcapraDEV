@@ -23,7 +23,6 @@ export default async function handler(req, res) {
     const { data: news, error, count } = await supabase
       .from('news')
       .select('*', { count: 'exact' })
-      .eq('status', 'published')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
