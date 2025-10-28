@@ -250,10 +250,12 @@ app.get('/api/news', async (req, res) => {
 
     res.json({
       news: data || [],
-      total: count || 0,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil((count || 0) / limit)
+      pagination: {
+        total: count || 0,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil((count || 0) / limit)
+      }
     });
 
   } catch (error) {
@@ -570,6 +572,559 @@ app.get('/api/admin/contacts', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('Erro ao listar contatos admin:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// ========== ROTAS ADMINISTRATIVAS COMPLETAS ==========
+
+// Users - Listar usuários
+app.get('/api/users', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, role, status, search } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('Users')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('createdAt', { ascending: false });
+
+    if (role) query = query.eq('role', role);
+    if (status) query = query.eq('status', status);
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      users: data || [],
+      pagination: {
+        total: count || 0,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil((count || 0) / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao listar usuários:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Users - Buscar usuário por ID
+app.get('/api/users/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Users')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Users - Criar usuário
+app.post('/api/users', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { name, email, password, role, status } = req.body;
+
+    // Hash da senha
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const { data, error } = await supabase
+      .from('Users')
+      .insert([{
+        name,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        role: role || 'user',
+        status: status || 'active',
+        createdAt: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Erro ao criar usuário:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Users - Atualizar usuário
+app.put('/api/users/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { name, email, password, role, status } = req.body;
+    const updateData = { name, email: email?.toLowerCase(), role, status };
+
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    const { data, error } = await supabase
+      .from('Users')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Users - Alterar status
+app.patch('/api/users/:id/status', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const { data, error } = await supabase
+      .from('Users')
+      .update({ status })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Status atualizado com sucesso', user: data });
+  } catch (error) {
+    console.error('Erro ao atualizar status:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Users - Deletar usuário
+app.delete('/api/users/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('Users')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Usuário removido com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar usuário:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Contacts - Listar contatos
+app.get('/api/contact', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('Contacts')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('createdAt', { ascending: false });
+
+    if (status) query = query.eq('status', status);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      contacts: data || [],
+      pagination: {
+        total: count || 0,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil((count || 0) / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao listar contatos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Contacts - Responder contato
+app.patch('/api/contact/:id/respond', authenticateToken, async (req, res) => {
+  try {
+    const { response } = req.body;
+
+    const { data, error } = await supabase
+      .from('Contacts')
+      .update({ 
+        status: 'respondido',
+        response,
+        respondedAt: new Date().toISOString(),
+        respondedBy: req.user.id
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Resposta registrada com sucesso', contact: data });
+  } catch (error) {
+    console.error('Erro ao responder contato:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// News Admin - Listar todas as notícias (admin)
+app.get('/api/news/admin/all', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('News')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('createdAt', { ascending: false });
+
+    if (status) query = query.eq('status', status);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      news: data || [],
+      pagination: {
+        total: count || 0,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil((count || 0) / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao listar notícias admin:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// News Admin - Buscar notícia por ID (admin)
+app.get('/api/news/admin/:id', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('News')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Notícia não encontrada' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Erro ao buscar notícia admin:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// News - Criar notícia
+app.post('/api/news', authenticateToken, async (req, res) => {
+  try {
+    const { title, content, excerpt, status, tags, image } = req.body;
+
+    const { data, error } = await supabase
+      .from('News')
+      .insert([{
+        title,
+        content,
+        excerpt,
+        status: status || 'rascunho',
+        tags: tags || [],
+        image,
+        authorId: req.user.id,
+        createdAt: new Date().toISOString(),
+        publishedAt: status === 'publicado' ? new Date().toISOString() : null
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(201).json({ message: 'Notícia criada com sucesso', news: data });
+  } catch (error) {
+    console.error('Erro ao criar notícia:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// News - Atualizar notícia
+app.put('/api/news/:id', authenticateToken, async (req, res) => {
+  try {
+    const { title, content, excerpt, status, tags, image } = req.body;
+    const updateData = { title, content, excerpt, status, tags, image };
+
+    if (status === 'publicado') {
+      updateData.publishedAt = new Date().toISOString();
+    } else if (status === 'rascunho') {
+      updateData.publishedAt = null;
+    }
+
+    const { data, error } = await supabase
+      .from('News')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Notícia atualizada com sucesso', news: data });
+  } catch (error) {
+    console.error('Erro ao atualizar notícia:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// News - Deletar notícia
+app.delete('/api/news/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('News')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Notícia removida com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar notícia:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// News - Upload de imagem
+app.post('/api/news/upload', authenticateToken, async (req, res) => {
+  try {
+    // Simulação de upload - em produção, integrar com Supabase Storage
+    res.json({
+      image: {
+        filename: 'placeholder.jpg',
+        path: 'https://via.placeholder.com/400x300',
+        url: 'https://via.placeholder.com/400x300'
+      }
+    });
+  } catch (error) {
+    console.error('Erro no upload:', error);
+    res.status(500).json({ error: 'Erro no upload' });
+  }
+});
+
+// News - Remover imagem
+app.delete('/api/news/image', authenticateToken, async (req, res) => {
+  try {
+    // Simulação de remoção - em produção, integrar com Supabase Storage
+    res.json({ message: 'Imagem removida' });
+  } catch (error) {
+    console.error('Erro ao remover imagem:', error);
+    res.status(500).json({ error: 'Erro ao remover imagem' });
+  }
+});
+
+// Adoptions - Listar adoções
+app.get('/api/adoptions', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('Adoptions')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('createdAt', { ascending: false });
+
+    if (status && status !== 'all') query = query.eq('status', status);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      adoptions: data || [],
+      pagination: {
+        total: count || 0,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil((count || 0) / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao listar adoções:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Adoptions - Atualizar status
+app.patch('/api/adoptions/:id/status', authenticateToken, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const { data, error } = await supabase
+      .from('Adoptions')
+      .update({ 
+        status,
+        reviewedAt: new Date().toISOString(),
+        reviewedBy: req.user.id
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Status atualizado com sucesso', adoption: data });
+  } catch (error) {
+    console.error('Erro ao atualizar status adoção:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Animals - Criar animal
+app.post('/api/animals', authenticateToken, async (req, res) => {
+  try {
+    const animalData = {
+      ...req.body,
+      createdBy: req.user.id,
+      createdAt: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('Animals')
+      .insert([animalData])
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(201).json({ message: 'Animal cadastrado com sucesso', animal: data });
+  } catch (error) {
+    console.error('Erro ao criar animal:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Animals - Atualizar animal
+app.put('/api/animals/:id', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Animals')
+      .update(req.body)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Animal atualizado com sucesso', animal: data });
+  } catch (error) {
+    console.error('Erro ao atualizar animal:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Animals - Deletar animal
+app.delete('/api/animals/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('Animals')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Animal removido com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar animal:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Animals - Marcar como adotado
+app.patch('/api/animals/:id/adopt', authenticateToken, async (req, res) => {
+  try {
+    const { adopterName, adopterContact, adopterNotes } = req.body;
+
+    const { data, error } = await supabase
+      .from('Animals')
+      .update({
+        status: 'adotado',
+        adoptedAt: new Date().toISOString(),
+        adopterName,
+        adopterContact,
+        adopterNotes
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Animal marcado como adotado', animal: data });
+  } catch (error) {
+    console.error('Erro ao marcar adoção:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
