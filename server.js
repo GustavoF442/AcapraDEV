@@ -15,7 +15,19 @@ const app = express();
 // Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, 'uploads', req.params.type || 'general');
+    // Determinar tipo baseado na rota
+    let type = 'general';
+    if (req.route && req.route.path) {
+      if (req.route.path.includes('animals')) {
+        type = 'animals';
+      } else if (req.route.path.includes('news')) {
+        type = 'news';
+      } else if (req.params.type) {
+        type = req.params.type;
+      }
+    }
+    
+    const uploadPath = path.join(__dirname, 'uploads', type);
     
     // Criar diretório se não existir
     if (!fs.existsSync(uploadPath)) {
@@ -1259,13 +1271,49 @@ app.patch('/api/adoptions/:id/status', authenticateToken, async (req, res) => {
 });
 
 // Animals - Criar animal
-app.post('/api/animals', authenticateToken, async (req, res) => {
+app.post('/api/animals', authenticateToken, upload.array('photos', 10), async (req, res) => {
   try {
+    console.log('Dados recebidos:', req.body);
+    console.log('Arquivos recebidos:', req.files);
+
+    // Processar fotos enviadas
+    const photos = [];
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        const relativePath = path.relative(__dirname, file.path).replace(/\\/g, '/');
+        photos.push({
+          filename: file.filename,
+          path: relativePath,
+          url: `/${relativePath}`,
+          originalname: file.originalname,
+          size: file.size,
+          isMain: photos.length === 0 // Primeira foto é a principal
+        });
+      });
+    }
+
     const animalData = {
-      ...req.body,
+      name: req.body.name,
+      species: req.body.species,
+      breed: req.body.breed,
+      age: req.body.age,
+      gender: req.body.gender,
+      size: req.body.size,
+      color: req.body.color,
+      description: req.body.description,
+      healthStatus: req.body.healthStatus,
+      temperament: req.body.temperament,
+      specialNeeds: req.body.specialNeeds,
+      vaccinated: req.body.vaccinated === 'true',
+      neutered: req.body.neutered === 'true',
+      microchipped: req.body.microchipped === 'true',
+      status: req.body.status || 'disponível',
+      photos: photos,
       createdBy: req.user.id,
       createdAt: new Date().toISOString()
     };
+
+    console.log('Dados processados para inserção:', animalData);
 
     const { data, error } = await supabase
       .from('Animals')
@@ -1274,34 +1322,95 @@ app.post('/api/animals', authenticateToken, async (req, res) => {
       .single();
 
     if (error) {
+      console.error('Erro do Supabase:', error);
       return res.status(400).json({ error: error.message });
     }
 
     res.status(201).json({ message: 'Animal cadastrado com sucesso', animal: data });
   } catch (error) {
     console.error('Erro ao criar animal:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    res.status(500).json({ error: 'Erro interno do servidor: ' + error.message });
   }
 });
 
 // Animals - Atualizar animal
-app.put('/api/animals/:id', authenticateToken, async (req, res) => {
+app.put('/api/animals/:id', authenticateToken, upload.array('photos', 10), async (req, res) => {
   try {
+    console.log('Atualizando animal ID:', req.params.id);
+    console.log('Dados recebidos:', req.body);
+    console.log('Arquivos recebidos:', req.files);
+
+    // Processar novas fotos se enviadas
+    const newPhotos = [];
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        const relativePath = path.relative(__dirname, file.path).replace(/\\/g, '/');
+        newPhotos.push({
+          filename: file.filename,
+          path: relativePath,
+          url: `/${relativePath}`,
+          originalname: file.originalname,
+          size: file.size,
+          isMain: newPhotos.length === 0
+        });
+      });
+    }
+
+    // Buscar dados atuais do animal para manter fotos existentes se necessário
+    const { data: currentAnimal } = await supabase
+      .from('Animals')
+      .select('photos')
+      .eq('id', req.params.id)
+      .single();
+
+    const existingPhotos = currentAnimal?.photos || [];
+    const allPhotos = newPhotos.length > 0 ? newPhotos : existingPhotos;
+
+    const animalData = {
+      name: req.body.name,
+      species: req.body.species,
+      breed: req.body.breed,
+      age: req.body.age,
+      gender: req.body.gender,
+      size: req.body.size,
+      color: req.body.color,
+      description: req.body.description,
+      healthStatus: req.body.healthStatus,
+      temperament: req.body.temperament,
+      specialNeeds: req.body.specialNeeds,
+      vaccinated: req.body.vaccinated === 'true',
+      neutered: req.body.neutered === 'true',
+      microchipped: req.body.microchipped === 'true',
+      status: req.body.status,
+      photos: allPhotos,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Remover campos undefined
+    Object.keys(animalData).forEach(key => {
+      if (animalData[key] === undefined) {
+        delete animalData[key];
+      }
+    });
+
+    console.log('Dados processados para atualização:', animalData);
+
     const { data, error } = await supabase
       .from('Animals')
-      .update(req.body)
+      .update(animalData)
       .eq('id', req.params.id)
       .select()
       .single();
 
     if (error) {
+      console.error('Erro do Supabase:', error);
       return res.status(400).json({ error: error.message });
     }
 
     res.json({ message: 'Animal atualizado com sucesso', animal: data });
   } catch (error) {
     console.error('Erro ao atualizar animal:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    res.status(500).json({ error: 'Erro interno do servidor: ' + error.message });
   }
 });
 
