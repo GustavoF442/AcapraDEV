@@ -6,20 +6,63 @@ process.noDeprecation = true;
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
+
+// Configuração do Multer para upload de arquivos
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, 'uploads', req.params.type || 'general');
+    
+    // Criar diretório se não existir
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    // Gerar nome único para o arquivo
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB
+  },
+  fileFilter: function (req, file, cb) {
+    // Aceitar apenas imagens
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas arquivos de imagem são permitidos!'), false);
+    }
+  }
+});
 
 // Middlewares básicos
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https:"],
-      styleElem: ["'self'", "'unsafe-inline'"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "https:"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https://jjedtjerraejimhnudph.supabase.co", "https:"],
-      connectSrc: ["'self'", "https://jjedtjerraejimhnudph.supabase.co", "https:"]
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https:", "blob:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https:", "data:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"],
+      imgSrc: ["'self'", "data:", "blob:", "https:", "http:", "https://jjedtjerraejimhnudph.supabase.co", "https://acapradev.onrender.com"],
+      mediaSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+      objectSrc: ["'none'"],
+      connectSrc: ["'self'", "https:", "wss:", "blob:", "data:", "https://jjedtjerraejimhnudph.supabase.co"],
+      workerSrc: ["'self'", "blob:"],
+      childSrc: ["'self'", "blob:"],
+      frameSrc: ["'self'", "https:"],
+      formAction: ["'self'", "https:"]
     }
   }
 }));
@@ -31,6 +74,9 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Servir arquivos de upload
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Usar apenas Supabase client - sem Sequelize
 const { createClient } = require('@supabase/supabase-js');
@@ -1071,30 +1117,81 @@ app.delete('/api/news/:id', authenticateToken, adminOnly, async (req, res) => {
 });
 
 // News - Upload de imagem
-app.post('/api/news/upload', authenticateToken, async (req, res) => {
+app.post('/api/news/upload', authenticateToken, upload.single('image'), async (req, res) => {
   try {
-    // Simulação de upload - em produção, integrar com Supabase Storage
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+
+    const relativePath = path.relative(__dirname, req.file.path).replace(/\\/g, '/');
+    
     res.json({
       image: {
-        filename: 'placeholder.jpg',
-        path: 'https://via.placeholder.com/400x300',
-        url: 'https://via.placeholder.com/400x300'
+        filename: req.file.filename,
+        path: relativePath,
+        url: `/${relativePath}`,
+        originalname: req.file.originalname,
+        size: req.file.size
       }
     });
   } catch (error) {
     console.error('Erro no upload:', error);
-    res.status(500).json({ error: 'Erro no upload' });
+    res.status(500).json({ error: 'Erro no upload: ' + error.message });
   }
 });
 
-// News - Remover imagem
+// Upload genérico de imagens (animals, news, etc)
+app.post('/api/upload/:type', authenticateToken, upload.array('images', 10), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+
+    const uploadedFiles = req.files.map(file => {
+      const relativePath = path.relative(__dirname, file.path).replace(/\\/g, '/');
+      return {
+        filename: file.filename,
+        path: relativePath,
+        url: `/${relativePath}`,
+        originalname: file.originalname,
+        size: file.size
+      };
+    });
+    
+    res.json({
+      images: uploadedFiles
+    });
+  } catch (error) {
+    console.error('Erro no upload:', error);
+    res.status(500).json({ error: 'Erro no upload: ' + error.message });
+  }
+});
+
+// Remover imagem
+app.delete('/api/upload/:type/:filename', authenticateToken, async (req, res) => {
+  try {
+    const { type, filename } = req.params;
+    const filePath = path.join(__dirname, 'uploads', type, filename);
+    
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      res.json({ message: 'Imagem removida com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Arquivo não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao remover imagem:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// News - Remover imagem (compatibilidade)
 app.delete('/api/news/image', authenticateToken, async (req, res) => {
   try {
-    // Simulação de remoção - em produção, integrar com Supabase Storage
     res.json({ message: 'Imagem removida' });
   } catch (error) {
     console.error('Erro ao remover imagem:', error);
-    res.status(500).json({ error: 'Erro ao remover imagem' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
