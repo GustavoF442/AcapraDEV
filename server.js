@@ -14,11 +14,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https://jjedtjerraejimhnudph.supabase.co"],
-      connectSrc: ["'self'", "https://jjedtjerraejimhnudph.supabase.co"]
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https:"],
+      styleElem: ["'self'", "'unsafe-inline'"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https:"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https://jjedtjerraejimhnudph.supabase.co", "https:"],
+      connectSrc: ["'self'", "https://jjedtjerraejimhnudph.supabase.co", "https:"]
     }
   }
 }));
@@ -389,6 +390,41 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
     res.json(user);
   } catch (error) {
     console.error('Erro ao buscar usuário:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Rota alternativa para stats admin (compatibilidade)
+app.get('/api/stats/admin', authenticateToken, async (req, res) => {
+  try {
+    const [animalsResult, adoptionsResult, contactsResult, newsResult] = await Promise.all([
+      supabase.from('Animals').select('status', { count: 'exact' }),
+      supabase.from('Adoptions').select('status', { count: 'exact' }),
+      supabase.from('Contacts').select('status', { count: 'exact' }),
+      supabase.from('News').select('status', { count: 'exact' })
+    ]);
+
+    res.json({
+      animals: {
+        total: animalsResult.count || 0,
+        available: animalsResult.data?.filter(a => a.status === 'disponível').length || 0
+      },
+      adoptions: {
+        total: adoptionsResult.count || 0,
+        pending: adoptionsResult.data?.filter(a => a.status === 'pendente').length || 0
+      },
+      contacts: {
+        total: contactsResult.count || 0,
+        unread: contactsResult.data?.filter(c => c.status === 'novo').length || 0
+      },
+      news: {
+        total: newsResult.count || 0,
+        published: newsResult.data?.filter(n => n.status === 'publicado').length || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas admin:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
