@@ -1,63 +1,84 @@
-require('dotenv').config();
-
-// Suprimir deprecation warnings de bibliotecas antigas
-process.noDeprecation = true;
-
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
 
 const app = express();
 
 // Middlewares básicos
-app.use(helmet());
 app.use(cors({
-  origin: true, // Permitir qualquer origem em produção para Vercel
+  origin: true,
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Conectar ao PostgreSQL (Supabase) e sincronizar modelos
-const { sequelize, testConnection } = require('../config/database');
-require('../models'); // garante que os models são carregados
-
-const initDatabase = async () => {
-  try {
-    await testConnection();
-    await sequelize.sync({ alter: true }); // alter: true para atualizar tabelas existentes
-    console.log('✅ Banco conectado e sincronizado');
-  } catch (error) {
-    console.error('❌ Erro ao conectar com o banco:', error.message);
-  }
-};
-
-// Inicializar banco
-initDatabase();
-
-// Rotas
-app.use('/api/auth', require('../routes/auth'));
-app.use('/api/animals', require('../routes/animals'));
-app.use('/api/adoptions', require('../routes/adoptions'));
-app.use('/api/news', require('../routes/news'));
-app.use('/api/contacts', require('../routes/contacts'));
-app.use('/api/users', require('../routes/users'));
-app.use('/api/stats', require('../routes/stats'));
-app.use('/api/uploads', require('../routes/uploads'));
-
-// Health
+// Health check simples
 app.get('/api/health', (_req, res) => {
-  res.json({ message: 'API da ACAPRA funcionando!', timestamp: new Date() });
-});
-
-// Handler de erro (depois das rotas)
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    message: 'Algo deu errado!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
+  res.json({ 
+    message: 'API da ACAPRA funcionando!', 
+    timestamp: new Date(),
+    status: 'ok'
   });
 });
 
-// Export para Vercel
+// Rota de teste
+app.get('/api/test', (_req, res) => {
+  res.json({ 
+    message: 'Teste da API funcionando!',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Rota para stats (mock temporário)
+app.get('/api/stats', (_req, res) => {
+  res.json({
+    summary: {
+      totalAnimals: 0,
+      adoptedAnimals: 0,
+      pendingAdoptions: 0,
+      totalNews: 0
+    }
+  });
+});
+
+// Rota para animais (mock temporário)
+app.get('/api/animals', (_req, res) => {
+  res.json({
+    animals: [],
+    pagination: {
+      page: 1,
+      pages: 1,
+      total: 0
+    }
+  });
+});
+
+// Rota para notícias (mock temporário)
+app.get('/api/news', (_req, res) => {
+  res.json({
+    news: [],
+    pagination: {
+      page: 1,
+      pages: 1,
+      total: 0
+    }
+  });
+});
+
+// Handler de erro
+app.use((err, req, res, next) => {
+  console.error('Error:', err.message);
+  res.status(500).json({
+    message: 'Erro interno do servidor',
+    error: err.message
+  });
+});
+
+// Catch all para rotas não encontradas
+app.use('*', (req, res) => {
+  res.status(404).json({
+    message: 'Rota não encontrada',
+    path: req.originalUrl
+  });
+});
+
 module.exports = app;
