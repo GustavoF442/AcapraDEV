@@ -14,15 +14,15 @@ const Footer = () => {
               <span className="text-2xl font-bold">ACAPRA</span>
             </div>
             <p className="text-gray-300 mb-4">
-              Associação de Proteção aos Animais dedicada ao resgate, cuidado e 
-              busca por lares amorosos para animais em situação de vulnerabilidade.
+              A ACAPRA atua há mais de 20 anos em Franca com trabalho 100% voluntário, 
+              resgatando e amparando animais em situação de maus-tratos e abandono.
             </p>
             <div className="flex space-x-4">
-              <a href="https://facebook.com/acapra" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Facebook da ACAPRA">
-                <Facebook className="h-6 w-6" />
+              <a href="https://facebook.com/acapra" target="_blank" rel="noopener noreferrer" className="group p-2 rounded-full text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all duration-200" aria-label="Facebook da ACAPRA">
+                <Facebook className="h-6 w-6 group-hover:scale-110 transition-transform" />
               </a>
-              <a href="https://instagram.com/acapra" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Instagram da ACAPRA">
-                <Instagram className="h-6 w-6" />
+              <a href="https://instagram.com/acapra" target="_blank" rel="noopener noreferrer" className="group p-2 rounded-full text-gray-400 hover:text-pink-400 hover:bg-pink-400/10 transition-all duration-200" aria-label="Instagram da ACAPRA">
+                <Instagram className="h-6 w-6 group-hover:scale-110 transition-transform" />
               </a>
             </div>
           </div>
@@ -65,17 +65,17 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-primary-400" />
-                <span className="text-gray-300">contato@acapra.org</span>
+                <a href="mailto:contato@acapra.org" className="text-gray-300 hover:text-primary-400 transition-colors">contato@acapra.org</a>
               </li>
               <li className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-primary-400" />
-                <span className="text-gray-300">(11) 9999-9999</span>
+                <a href="tel:+5516999999999" className="text-gray-300 hover:text-primary-400 transition-colors">(16) 99999-9999</a>
               </li>
               <li className="flex items-start space-x-2">
                 <MapPin className="h-4 w-4 text-primary-400 mt-1" />
                 <span className="text-gray-300">
-                  Rua dos Animais, 123<br />
-                  São Paulo - SP
+                  Franca - SP<br />
+                  Atendemos toda a região
                 </span>
               </li>
             </ul>
