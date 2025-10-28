@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowRight, Heart, Users, Award, Sparkles, PawPrint } from 'lucide-react';
+import { ArrowRight, Heart, Users, Award, Sparkles, Star } from 'lucide-react';
 import AnimatedStats from '../components/AnimatedStats';
 import AnimatedBackground from '../components/AnimatedBackground';
 
@@ -29,7 +29,7 @@ const Home = () => {
         
         {/* Floating Elements */}
         <div className="absolute top-20 left-10 animate-bounce delay-1000">
-          <PawPrint className="h-8 w-8 text-white/30" />
+          <Star className="h-8 w-8 text-white/30" />
         </div>
         <div className="absolute top-40 right-20 animate-bounce delay-2000">
           <Heart className="h-6 w-6 text-pink-300/50" />
