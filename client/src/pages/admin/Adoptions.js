@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import api from '../../services/api';
 
 const StatusBadge = ({ status }) => {
@@ -14,7 +14,7 @@ export default function AdoptionsAdmin() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
 
-  const load = async (pg=1, st=status) => {
+  const load = useCallback(async (pg=1, st=status) => {
     try {
       setLoading(true); setErr('');
       const p = new URLSearchParams();
@@ -30,9 +30,9 @@ export default function AdoptionsAdmin() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [status]);
 
-  useEffect(() => { load(1, status); /* eslint-disable-next-line */ }, [status]);
+  useEffect(() => { load(1, status); }, [status, load]);
 
   const setStatusTo = async (id, newStatus) => {
     if (!window.confirm(`Confirmar ${newStatus} para #${id}?`)) return;

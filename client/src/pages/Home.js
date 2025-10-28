@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Heart, Users, Home as HomeIcon, Award, ArrowRight, Calendar } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import AnimatedStats from '../components/AnimatedStats';
 
 const Home = () => {

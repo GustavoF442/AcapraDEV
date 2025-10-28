@@ -18,7 +18,7 @@ const AnimalForm = () => {
   const { register, handleSubmit, formState: { errors }, setValue } = useForm();
 
   // Carregar dados do animal para edição
-  const { data: animal } = useQuery(
+  const { data: animalData } = useQuery(
     ['animal', id],
     () => axios.get(`/api/animals/${id}`).then(res => res.data),
     { 

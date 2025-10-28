@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 
@@ -9,14 +9,14 @@ export default function NewsAdminList() {
   const [status, setStatus] = useState(''); // '', 'rascunho', 'publicado'
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
-  const [sp, setSp] = useSearchParams();
+  const [sp] = useSearchParams();
 
   useEffect(() => {
     const s = sp.get('status');
     if (s) setStatus(s);
   }, [sp]);
 
-  const load = async (pg = 1, st = status) => {
+  const load = useCallback(async (pg = 1, st = status) => {
     try {
       setLoading(true);
       setErr('');
@@ -33,9 +33,9 @@ export default function NewsAdminList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [status]);
 
-  useEffect(() => { load(1, status); /* eslint-disable-next-line */ }, [status]);
+  useEffect(() => { load(1, status); }, [status, load]);
 
   const del = async (id) => {
     if (!window.confirm(`Remover notícia #${id}?`)) return;

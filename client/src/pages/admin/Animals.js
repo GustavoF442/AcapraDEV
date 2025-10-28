@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Search, Edit, Trash2, Eye, Heart, MapPin, Calendar } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Heart, MapPin } from 'lucide-react';
 
 const AdminAnimals = () => {
   const [filters, setFilters] = useState({
