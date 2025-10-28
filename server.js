@@ -178,10 +178,12 @@ app.get('/api/animals', async (req, res) => {
 
     res.json({
       animals: data || [],
-      total: count || 0,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil((count || 0) / limit)
+      pagination: {
+        total: count || 0,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil((count || 0) / limit)
+      }
     });
 
   } catch (error) {
