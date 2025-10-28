@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await api.get('/auth/me');
+          const response = await api.get('/api/auth/me');
           setUser(response.data);
         } catch (error) {
           console.error('Token inválido:', error);
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/api/auth/login', { email, password });
       const { token: newToken, user: userData } = response.data;
       
       setToken(newToken);

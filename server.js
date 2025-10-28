@@ -294,6 +294,129 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
+// ========== ROTAS PÚBLICAS ==========
+
+// Contact - Enviar mensagem de contato (público)
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, phone, subject, message } = req.body;
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ error: 'Todos os campos obrigatórios devem ser preenchidos' });
+    }
+
+    const { data, error } = await supabase
+      .from('Contacts')
+      .insert([{
+        name,
+        email,
+        phone,
+        subject,
+        message,
+        status: 'novo',
+        createdAt: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao criar contato:', error);
+      return res.status(500).json({ error: 'Erro ao enviar mensagem' });
+    }
+
+    res.status(201).json({ 
+      message: 'Mensagem enviada com sucesso! Entraremos em contato em breve.',
+      contact: data 
+    });
+
+  } catch (error) {
+    console.error('Erro na API contact:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Adoptions - Solicitar adoção (público)
+app.post('/api/adoptions', async (req, res) => {
+  try {
+    const { 
+      animalId, 
+      adopter_name, 
+      adopter_email, 
+      adopter_phone, 
+      adopter_address,
+      adopter_city,
+      adopter_state,
+      adopter_zipcode,
+      motivation,
+      experience,
+      housing_type,
+      has_yard,
+      other_pets,
+      family_members,
+      work_schedule,
+      emergency_contact
+    } = req.body;
+
+    if (!animalId || !adopter_name || !adopter_email || !adopter_phone || !motivation) {
+      return res.status(400).json({ error: 'Campos obrigatórios não preenchidos' });
+    }
+
+    // Verificar se o animal existe e está disponível
+    const { data: animal, error: animalError } = await supabase
+      .from('Animals')
+      .select('id, name, status')
+      .eq('id', animalId)
+      .single();
+
+    if (animalError || !animal) {
+      return res.status(404).json({ error: 'Animal não encontrado' });
+    }
+
+    if (animal.status !== 'disponível') {
+      return res.status(400).json({ error: 'Este animal não está mais disponível para adoção' });
+    }
+
+    const { data, error } = await supabase
+      .from('Adoptions')
+      .insert([{
+        animalId: parseInt(animalId),
+        adopter_name,
+        adopter_email,
+        adopter_phone,
+        adopter_address,
+        adopter_city,
+        adopter_state,
+        adopter_zipcode,
+        motivation,
+        experience,
+        housing_type,
+        has_yard,
+        other_pets,
+        family_members,
+        work_schedule,
+        emergency_contact,
+        status: 'pendente',
+        createdAt: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao criar solicitação de adoção:', error);
+      return res.status(500).json({ error: 'Erro ao enviar solicitação de adoção' });
+    }
+
+    res.status(201).json({ 
+      message: 'Solicitação de adoção enviada com sucesso! Analisaremos seu pedido e entraremos em contato.',
+      adoption: data 
+    });
+
+  } catch (error) {
+    console.error('Erro na API adoptions:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // ========== ROTAS ADMINISTRATIVAS ==========
 
 // Login Admin
