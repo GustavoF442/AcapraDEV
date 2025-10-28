@@ -78,14 +78,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Listen (apenas para desenvolvimento local)
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  });
-}
+// Listen (para desenvolvimento e produção)
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Servidor ACAPRA rodando na porta ${PORT}`);
+  console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔗 URL: http://0.0.0.0:${PORT}`);
+});
 
-// Export para Vercel
+// Export para Vercel (se necessário)
 module.exports = app;
