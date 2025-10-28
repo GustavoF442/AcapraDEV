@@ -18,10 +18,10 @@ const Footer = () => {
               busca por lares amorosos para animais em situação de vulnerabilidade.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-primary-400 transition-colors">
+              <a href="https://facebook.com/acapra" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Facebook da ACAPRA">
                 <Facebook className="h-6 w-6" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-primary-400 transition-colors">
+              <a href="https://instagram.com/acapra" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Instagram da ACAPRA">
                 <Instagram className="h-6 w-6" />
               </a>
             </div>

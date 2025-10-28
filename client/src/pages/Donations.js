@@ -262,7 +262,7 @@ const Donations = () => {
                 Compartilhe nosso trabalho nas redes sociais e ajude mais animais 
                 a encontrarem um lar.
               </p>
-              <a href="#" className="text-purple-600 hover:text-purple-700 font-medium">
+              <a href="https://instagram.com/acapra" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 font-medium" aria-label="Seguir ACAPRA no Instagram">
                 Seguir nas redes →
               </a>
             </div>
@@ -317,7 +317,7 @@ const Donations = () => {
                   Publicamos relatórios mensais com todas as receitas e despesas. 
                   Você pode acompanhar exatamente como sua doação está sendo utilizada.
                 </p>
-                <a href="#" className="text-primary-600 hover:text-primary-700 font-medium">
+                <a href="/relatorios" className="text-primary-600 hover:text-primary-700 font-medium" aria-label="Ver relatórios de transparência">
                   Ver relatórios →
                 </a>
               </div>
