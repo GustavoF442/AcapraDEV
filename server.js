@@ -69,6 +69,25 @@ app.get('/api/health', (_req, res) => {
   res.json({ message: 'API da ACAPRA funcionando!', timestamp: new Date() });
 });
 
+// Debug endpoint para verificar arquivos estáticos
+app.get('/api/debug', (_req, res) => {
+  const path = require('path');
+  const fs = require('fs');
+  
+  const buildPath = path.join(__dirname, 'client/build');
+  const indexPath = path.join(buildPath, 'index.html');
+  
+  res.json({
+    message: 'Debug info',
+    environment: process.env.NODE_ENV,
+    buildPathExists: fs.existsSync(buildPath),
+    indexExists: fs.existsSync(indexPath),
+    buildPath: buildPath,
+    indexPath: indexPath,
+    timestamp: new Date()
+  });
+});
+
 // Servir arquivos estáticos do React (apenas em produção)
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
