@@ -14,7 +14,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https://jjedtjerraejimhnudph.supabase.co"],
       connectSrc: ["'self'", "https://jjedtjerraejimhnudph.supabase.co"]
@@ -371,6 +372,26 @@ const adminOnly = (req, res, next) => {
   }
   next();
 };
+
+// Rota para verificar usuário atual
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const { data: user, error } = await supabase
+      .from('Users')
+      .select('id, name, email, role, status')
+      .eq('id', req.user.id)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
 
 // Dashboard Stats (Admin)
 app.get('/api/admin/stats', authenticateToken, async (req, res) => {
