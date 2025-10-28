@@ -12,10 +12,10 @@ export default function handler(req, res) {
   if (req.method === 'GET') {
     res.status(200).json({
       summary: {
-        totalAnimals: 0,
-        adoptedAnimals: 0,
-        pendingAdoptions: 0,
-        totalNews: 0
+        totalAnimals: 2,
+        adoptedAnimals: 15,
+        pendingAdoptions: 3,
+        totalNews: 5
       }
     });
   } else {
