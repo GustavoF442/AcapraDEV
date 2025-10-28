@@ -5,6 +5,7 @@ import api from '../services/api';
 import { ArrowRight, Heart, Users, Award, Sparkles, Star } from 'lucide-react';
 import AnimatedStats from '../components/AnimatedStats';
 import AnimatedBackground from '../components/AnimatedBackground';
+import { resolveImageUrl } from '../utils/images';
 
 const Home = () => {
   const { data: stats } = useQuery('stats', () =>
@@ -174,7 +175,7 @@ const Home = () => {
                 <div key={animal.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
                   <div className="aspect-w-16 aspect-h-12 overflow-hidden">
                     <img
-                      src={animal.photos?.[0]?.path ? `${animal.photos[0].path}` : '/placeholder-animal.jpg'}
+                      src={animal.photos?.[0] ? resolveImageUrl(animal.photos[0]) : '/placeholder-animal.jpg'}
                       alt={animal.name}
                       className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
                     />

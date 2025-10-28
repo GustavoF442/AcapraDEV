@@ -66,13 +66,7 @@ const AnimalForm = () => {
 
   const handleImageRemove = async (index) => {
     const photo = photos[index];
-    if (photo.path) {
-      try {
-        await api.delete(`/animals/photo/${photo.path}`);
-      } catch (error) {
-        console.error('Erro ao remover imagem:', error);
-      }
-    }
+    // Apenas remove localmente - o backend sincroniza ao salvar
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 

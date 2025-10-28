@@ -27,7 +27,7 @@ export default function NewsForm() {
     const load = async () => {
       if (!id) return;
       try {
-        const { data } = await api.get(`/api/news/admin/${id}`);
+        const { data } = await api.get(`/news/admin/${id}`);
         setForm({
           title: data.title || '',
           content: data.content || '',
@@ -54,7 +54,7 @@ export default function NewsForm() {
       if (!file) return;
       const fd = new FormData();
       fd.append('image', file);
-      const res = await api.post('/api/news/upload', fd); // Authorization já via interceptor
+      const res = await api.post('/news/upload', fd); // Authorization já via interceptor
       setImage(res.data?.image || null);
     } catch (err) {
       alert(err?.response?.data?.message || 'Falha no upload');
@@ -86,9 +86,9 @@ export default function NewsForm() {
     try {
       setLoading(true);
       if (id) {
-        await api.put(`/api/news/${id}`, payload);
+        await api.put(`/news/${id}`, payload);
       } else {
-        await api.post('/api/news', payload);
+        await api.post('/news', payload);
       }
       navigate('/admin/noticias');
     } catch (error) {
@@ -106,7 +106,7 @@ export default function NewsForm() {
   const removeImage = async () => {
     try {
       if (!image?.path) { setImage(null); return; }
-      await api.delete('/api/news/image', { data: { path: image.path } });
+      await api.delete('/news/image', { data: { path: image.path } });
       setImage(null);
     } catch (e) {
       // Se não existir rota, apenas limpa local
@@ -135,7 +135,7 @@ export default function NewsForm() {
         try {
           const fd = new FormData();
           fd.append('image', file);
-          const res = await api.post('/api/news/upload', fd);
+          const res = await api.post('/news/upload', fd);
           setImage(res.data?.image || null);
         } catch (err) {
           alert(err?.response?.data?.message || 'Falha no upload');

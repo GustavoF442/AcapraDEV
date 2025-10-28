@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { Plus, Search, Edit, Trash2, Heart, MapPin } from 'lucide-react';
+import { resolveImageUrl } from '../../utils/images';
 
 const AdminAnimals = () => {
   const [filters, setFilters] = useState({
@@ -174,16 +175,12 @@ const AdminAnimals = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-12 w-12">
-  <img
-    className="h-12 w-12 rounded-lg object-cover"
-    src={
-      animal.photos?.[0]?.path
-        ? String(animal.photos[0].path).replace(/\\/g, '/')
-        : '/placeholder-animal.jpg'
-    }
-    alt={animal.name}
-  />
-</div>
+                              <img
+                                className="h-12 w-12 rounded-lg object-cover"
+                                src={animal.photos?.[0] ? resolveImageUrl(animal.photos[0]) : '/placeholder-animal.jpg'}
+                                alt={animal.name}
+                              />
+                            </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
                                 {animal.name}

@@ -1133,16 +1133,11 @@ app.post('/api/news/upload', authenticateToken, upload.single('image'), async (r
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
 
-    const relativePath = path.relative(__dirname, req.file.path).replace(/\\/g, '/');
+    // Upload para Supabase Storage
+    const uploadedImage = await uploadImageToSupabase(req.file);
     
     res.json({
-      image: {
-        filename: req.file.filename,
-        path: relativePath,
-        url: `/${relativePath}`,
-        originalname: req.file.originalname,
-        size: req.file.size
-      }
+      image: uploadedImage
     });
   } catch (error) {
     console.error('Erro no upload:', error);
@@ -1157,16 +1152,9 @@ app.post('/api/upload/:type', authenticateToken, upload.array('images', 10), asy
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
 
-    const uploadedFiles = req.files.map(file => {
-      const relativePath = path.relative(__dirname, file.path).replace(/\\/g, '/');
-      return {
-        filename: file.filename,
-        path: relativePath,
-        url: `/${relativePath}`,
-        originalname: file.originalname,
-        size: file.size
-      };
-    });
+    // Upload para Supabase Storage
+    const uploadPromises = req.files.map(file => uploadImageToSupabase(file));
+    const uploadedFiles = await Promise.all(uploadPromises);
     
     res.json({
       images: uploadedFiles

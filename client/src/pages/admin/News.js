@@ -24,7 +24,7 @@ export default function NewsAdminList() {
       params.set('page', String(pg));
       params.set('limit', '10');
       if (st) params.set('status', st);
-      const { data } = await api.get(`/api/news/admin/all?${params.toString()}`);
+      const { data } = await api.get(`/news/admin/all?${params.toString()}`);
       setNews(data?.news || []);
       setPage(data?.pagination?.page || pg);
       setPages(data?.pagination?.pages || 1);
@@ -40,7 +40,7 @@ export default function NewsAdminList() {
   const del = async (id) => {
     if (!window.confirm(`Remover notícia #${id}?`)) return;
     try {
-      await api.delete(`/api/news/${id}`);
+      await api.delete(`/news/${id}`);
       await load(page, status);
     } catch (e) {
       alert(e?.response?.data?.message || 'Falha ao remover');
