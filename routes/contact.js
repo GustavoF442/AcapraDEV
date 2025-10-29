@@ -2,23 +2,10 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Contact, User } = require('../models');
 const { auth } = require('../middleware/auth');
-const nodemailer = require('nodemailer');
+const { sendSimpleEmail } = require('../services/emailService');
 const { Op } = require('sequelize');
 
 const router = express.Router();
-
-// Configurar transporter de email
-const createEmailTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-};
 
 // Enviar mensagem de contato (público)
 router.post('/', [
@@ -38,13 +25,10 @@ router.post('/', [
 
     // Enviar email para ACAPRA
     try {
-      const transporter = createEmailTransporter();
-      
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: process.env.EMAIL_USER,
-        subject: `Contato do Site - ${req.body.subject}`,
-        html: `
+      await sendSimpleEmail(
+        process.env.EMAIL_USER,
+        `Contato do Site - ${req.body.subject}`,
+        `
           <h2>Nova Mensagem de Contato</h2>
           <p><strong>Nome:</strong> ${req.body.name}</p>
           <p><strong>Email:</strong> ${req.body.email}</p>
@@ -54,10 +38,8 @@ router.post('/', [
           <p>${req.body.message.replace(/\n/g, '<br>')}</p>
           <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
         `,
-        replyTo: req.body.email
-      };
-
-      await transporter.sendMail(mailOptions);
+        req.body.email
+      );
     } catch (emailError) {
       console.error('Erro ao enviar email:', emailError);
       // Não falhar a requisição por erro de email

@@ -2,23 +2,10 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Adoption, Animal, User } = require('../models');
 const { auth } = require('../middleware/auth');
-const nodemailer = require('nodemailer');
+const { sendEmail } = require('../services/emailService');
 const { Op } = require('sequelize');
 
 const router = express.Router();
-
-// Configurar transporter de email
-const createEmailTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-};
 
 // Criar solicitação de adoção (público)
 router.post('/', [
@@ -64,30 +51,36 @@ router.post('/', [
       ...adoptionData
     });
 
-    // Enviar email para ACAPRA
+    // Enviar emails de confirmação e notificação
     try {
-      const transporter = createEmailTransporter();
-      
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: process.env.EMAIL_USER,
-        subject: `Nova Solicitação de Adoção - ${animal.name}`,
-        html: `
-          <h2>Nova Solicitação de Adoção</h2>
-          <h3>Animal: ${animal.name}</h3>
-          <p><strong>Solicitante:</strong> ${adoptionData.adopterName}</p>
-          <p><strong>Email:</strong> ${adoptionData.adopterEmail}</p>
-          <p><strong>Telefone:</strong> ${adoptionData.adopterPhone}</p>
-          ${adoptionData.housingType ? `<p><strong>Tipo de moradia:</strong> ${adoptionData.housingType}</p>` : ''}
-          <p><strong>Motivação:</strong> ${adoptionData.motivation}</p>
-          <p><strong>Data da solicitação:</strong> ${new Date().toLocaleString('pt-BR')}</p>
-          <p>Acesse o painel administrativo para mais detalhes.</p>
-        `
-      };
+      // Email de confirmação para o adotante
+      await sendEmail(
+        adoptionData.adopterEmail,
+        'adoptionConfirmation',
+        {
+          adopterName: adoptionData.adopterName,
+          animalName: animal.name,
+          adopterEmail: adoptionData.adopterEmail,
+          adopterPhone: adoptionData.adopterPhone
+        }
+      );
 
-      await transporter.sendMail(mailOptions);
+      // Email de notificação para ACAPRA
+      await sendEmail(
+        process.env.EMAIL_USER,
+        'adoptionReceived',
+        {
+          animalName: animal.name,
+          animalId: animal.id,
+          adopterName: adoptionData.adopterName,
+          adopterEmail: adoptionData.adopterEmail,
+          adopterPhone: adoptionData.adopterPhone,
+          city: adoptionData.city,
+          motivation: adoptionData.motivation
+        }
+      );
     } catch (emailError) {
-      console.error('Erro ao enviar email:', emailError);
+      console.error('Erro ao enviar emails:', emailError);
       // Não falhar a requisição por erro de email
     }
 
@@ -198,6 +191,22 @@ router.patch('/:id/status', auth, [
     // Se rejeitada ou concluída, voltar animal para "disponível" (se não foi adotado)
     if (status === 'rejeitado') {
       await adoption.animal.update({ status: 'disponível' });
+    }
+
+    // Enviar email ao adotante notificando mudança de status
+    try {
+      await sendEmail(
+        adoption.adopterEmail,
+        'adoptionStatusUpdate',
+        {
+          adopterName: adoption.adopterName,
+          animalName: adoption.animal.name,
+          status: status,
+          notes: notes || ''
+        }
+      );
+    } catch (emailError) {
+      console.error('Erro ao enviar email de atualização:', emailError);
     }
 
     res.json({
