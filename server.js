@@ -328,6 +328,67 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
+// News - Buscar notícia individual por ID (público)
+app.get('/api/news/:id', async (req, res) => {
+  console.log('🔵 PUBLIC NEWS DETAIL ROUTE HIT - ID:', req.params.id);
+  
+  try {
+    const { id } = req.params;
+    
+    const { data, error } = await supabase
+      .from('News')
+      .select('*')
+      .eq('id', id)
+      .eq('status', 'publicado')
+      .single();
+
+    if (error || !data) {
+      console.log('❌ News not found:', id);
+      return res.status(404).json({ 
+        error: 'Notícia não encontrada',
+        message: 'A notícia solicitada não existe ou não está publicada'
+      });
+    }
+
+    console.log('✅ News found:', data.title);
+    res.json(data);
+
+  } catch (error) {
+    console.error('Erro ao buscar notícia:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor',
+      details: error.message
+    });
+  }
+});
+
+// News - Incrementar visualizações (público)
+app.patch('/api/news/:id/view', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Buscar views atual
+    const { data: newsData } = await supabase
+      .from('News')
+      .select('views')
+      .eq('id', id)
+      .single();
+
+    if (newsData) {
+      // Incrementar views
+      await supabase
+        .from('News')
+        .update({ views: (newsData.views || 0) + 1 })
+        .eq('id', id);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao incrementar views:', error);
+    res.status(500).json({ error: 'Erro ao incrementar visualizações' });
+  }
+});
+
 // API Route - Stats (para o frontend público)
 app.get('/api/stats', async (req, res) => {
   try {
@@ -1230,7 +1291,10 @@ app.get('/api/adoptions', authenticateToken, async (req, res) => {
 
     let query = supabase
       .from('Adoptions')
-      .select('*', { count: 'exact' })
+      .select(`
+        *,
+        animal:Animals(id, name, species, breed, age, size, photos, status)
+      `, { count: 'exact' })
       .range(offset, offset + limit - 1)
       .order('createdAt', { ascending: false });
 
@@ -1239,9 +1303,12 @@ app.get('/api/adoptions', authenticateToken, async (req, res) => {
     const { data, error, count } = await query;
 
     if (error) {
+      console.error('❌ Erro ao buscar adoções:', error);
       return res.status(500).json({ error: error.message });
     }
 
+    console.log('✅ Adoções encontradas:', data?.length);
+    
     res.json({
       adoptions: data || [],
       pagination: {
