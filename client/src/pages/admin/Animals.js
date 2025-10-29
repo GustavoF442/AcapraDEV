@@ -287,7 +287,7 @@ const AdminAnimals = () => {
             </div>
 
             {/* Paginação */}
-            {data.pagination.pages > 1 && (
+            {data?.pagination?.pages > 1 && (
               <div className="flex justify-center mt-8">
                 <div className="flex space-x-2">
                   <button
@@ -298,7 +298,7 @@ const AdminAnimals = () => {
                     Anterior
                   </button>
                   
-                  {[...Array(Math.min(5, data.pagination.pages))].map((_, i) => {
+                  {[...Array(Math.min(5, data?.pagination?.pages || 1))].map((_, i) => {
                     const pageNum = i + 1;
                     return (
                       <button
@@ -317,7 +317,7 @@ const AdminAnimals = () => {
                   
                   <button
                     onClick={() => setPage(page + 1)}
-                    disabled={page === data.pagination.pages}
+                    disabled={page === data?.pagination?.pages}
                     className="px-3 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
                     Próxima
