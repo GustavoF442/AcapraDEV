@@ -63,17 +63,21 @@ const EventCalendar = ({ events = [] }) => {
         <div
           key={day}
           className={`h-24 border border-gray-200 p-2 overflow-y-auto ${
-            isToday ? 'bg-green-50 border-green-400' : 'bg-white hover:bg-gray-50'
+            isToday ? 'border-2' : 'bg-white hover:bg-gray-50'
           } transition-colors`}
+          style={isToday ? {backgroundColor: '#f8f7fa', borderColor: '#555086'} : {}}
         >
-          <div className={`text-sm font-semibold mb-1 ${isToday ? 'text-green-700' : 'text-gray-700'}`}>
+          <div className={`text-sm font-semibold mb-1`} style={isToday ? {color: '#555086'} : {color: '#374151'}}>
             {day}
           </div>
           <div className="space-y-1">
             {dayEvents.map((event) => (
               <div
                 key={event.id}
-                className="text-xs p-1 rounded bg-green-100 text-green-800 truncate cursor-pointer hover:bg-green-200"
+                className="text-xs p-1 rounded truncate cursor-pointer"
+                style={{backgroundColor: '#55508620', color: '#555086'}}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#55508630'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#55508620'}
                 title={`${event.title} - ${event.eventTime}`}
               >
                 <CalendarIcon className="h-3 w-3 inline mr-1" />
@@ -130,11 +134,11 @@ const EventCalendar = ({ events = [] }) => {
       {/* Legenda */}
       <div className="mt-4 flex items-center justify-center space-x-4 text-sm">
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-green-50 border border-green-400 rounded mr-2"></div>
+          <div className="w-4 h-4 border-2 rounded mr-2" style={{backgroundColor: '#f8f7fa', borderColor: '#555086'}}></div>
           <span className="text-gray-600">Hoje</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-green-100 rounded mr-2"></div>
+          <div className="w-4 h-4 rounded mr-2" style={{backgroundColor: '#55508620'}}></div>
           <span className="text-gray-600">Com Eventos</span>
         </div>
       </div>

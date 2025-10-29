@@ -21,18 +21,18 @@ const Home = () => {
   return (
     <div>
       {/* Hero Section - Clean & Soft Design */}
-      <section className="relative bg-gradient-to-br from-green-50 via-blue-50 to-green-50 overflow-hidden">
+      <section className="relative overflow-hidden" style={{background: 'linear-gradient(to bottom right, #f8f7fa, #ebe9f0, #f8f7fa)'}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-flex items-center px-3 py-1.5 bg-green-100 rounded-full text-green-700 text-sm font-medium mb-6">
+              <div className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium mb-6" style={{backgroundColor: '#55508620', color: '#555086'}}>
                 <Heart className="h-4 w-4 mr-2" />
                 Resgatando vidas, unindo corações
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6" style={{color: '#555086'}}>
                 Adote um amigo e
-                <span className="text-green-600"> transforme vidas</span>
+                <span style={{color: '#555086'}}> transforme vidas</span>
               </h1>
               
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
@@ -42,7 +42,10 @@ const Home = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link 
                   to="/animais" 
-                  className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                  className="inline-flex items-center justify-center px-6 py-3 text-white font-medium rounded-lg transition-colors shadow-sm"
+                  style={{backgroundColor: '#555086'}}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#443f6d'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#555086'}
                 >
                   Ver Animais
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -73,8 +76,8 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Heart className="h-7 w-7 text-green-600" />
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center mx-auto mb-3" style={{backgroundColor: '#55508620'}}>
+                <Heart className="h-7 w-7" style={{color: '#555086'}} />
               </div>
               <div className="text-3xl font-semibold text-gray-900 mb-1">
                 {stats?.adopted || 1247}
@@ -83,8 +86,8 @@ const Home = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <HomeIcon className="h-7 w-7 text-blue-600" />
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center mx-auto mb-3" style={{backgroundColor: '#55508620'}}>
+                <HomeIcon className="h-7 w-7" style={{color: '#555086'}} />
               </div>
               <div className="text-3xl font-semibold text-gray-900 mb-1">
                 {stats?.available || 89}
@@ -93,8 +96,8 @@ const Home = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Users className="h-7 w-7 text-purple-600" />
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center mx-auto mb-3" style={{backgroundColor: '#55508620'}}>
+                <Users className="h-7 w-7" style={{color: '#555086'}} />
               </div>
               <div className="text-3xl font-semibold text-gray-900 mb-1">
                 {stats?.adoptions || 2156}
@@ -103,8 +106,8 @@ const Home = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-14 h-14 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Users className="h-7 w-7 text-orange-600" />
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center mx-auto mb-3" style={{backgroundColor: '#55508620'}}>
+                <Users className="h-7 w-7" style={{color: '#555086'}} />
               </div>
               <div className="text-3xl font-semibold text-gray-900 mb-1">15.000</div>
               <div className="text-sm text-gray-600">Estimativa na Rua</div>
