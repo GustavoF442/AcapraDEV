@@ -616,7 +616,7 @@ app.post('/api/contact', async (req, res) => {
 
         // 2. Email de notificação para ACAPRA
         await sendSimpleEmail(
-          process.env.EMAIL_FROM,
+          'acapratest@gmail.com',
           `Novo Contato do Site - ${subject}`,
           `
             <h2>Nova Mensagem de Contato</h2>

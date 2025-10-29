@@ -20,84 +20,93 @@ const Home = () => {
 
   return (
     <div>
-      {/* Hero Section - Clean Design */}
-      <section className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-pink-600 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center">
-          <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-8">
-            <Sparkles className="h-4 w-4 mr-2" />
-            Resgatando vidas, unindo corações
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
-            Adote um<br />
-            <span className="bg-gradient-to-r from-pink-200 to-white bg-clip-text text-transparent">
-              Amigo
-            </span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto">
-            Somos voluntários dedicados a dar uma segunda oportunidade a cães e gatos em Franca. Conheça o nosso trabalho e faça parte desta missão.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              to="/animais" 
-              className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white font-semibold rounded-full hover:shadow-xl transition-all"
-            >
-              Quero Adotar
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
+      {/* Hero Section - Clean & Soft Design */}
+      <section className="relative bg-gradient-to-br from-green-50 via-blue-50 to-green-50 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center px-3 py-1.5 bg-green-100 rounded-full text-green-700 text-sm font-medium mb-6">
+                <Heart className="h-4 w-4 mr-2" />
+                Resgatando vidas, unindo corações
+              </div>
+              
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                Adote um amigo e
+                <span className="text-green-600"> transforme vidas</span>
+              </h1>
+              
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                Somos voluntários dedicados a resgatar e cuidar de cães e gatos em Franca. Cada adoção representa uma vida transformada.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link 
+                  to="/animais" 
+                  className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                >
+                  Ver Animais
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+                
+                <Link 
+                  to="/sobre" 
+                  className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:border-gray-400 transition-colors"
+                >
+                  Sobre Nós
+                </Link>
+              </div>
+            </div>
             
-            <Link 
-              to="/doacoes" 
-              className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-full border-2 border-white/50 hover:bg-white/20 transition-all"
-            >
-              Como Ajudar
-              <Heart className="ml-2 h-5 w-5" />
-            </Link>
+            <div className="hidden md:block">
+              <img 
+                src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=600&h=400&fit=crop" 
+                alt="Animais ACAPRA" 
+                className="rounded-2xl shadow-xl"
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Estatísticas - Clean Cards */}
-      <section className="bg-gradient-to-br from-purple-600 via-purple-700 to-pink-600 py-16">
+      {/* Estatísticas - Soft Cards */}
+      <section className="bg-white py-16 border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Heart className="h-8 w-8 text-red-500" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Heart className="h-7 w-7 text-green-600" />
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">
+              <div className="text-3xl font-semibold text-gray-900 mb-1">
                 {stats?.adopted || 1247}
               </div>
-              <div className="text-sm text-gray-600">Animais Adotados</div>
+              <div className="text-sm text-gray-500">Animais Adotados</div>
             </div>
             
-            <div className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <HomeIcon className="h-8 w-8 text-blue-500" />
+            <div className="text-center">
+              <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <HomeIcon className="h-7 w-7 text-blue-600" />
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">
+              <div className="text-3xl font-semibold text-gray-900 mb-1">
                 {stats?.available || 89}
               </div>
-              <div className="text-sm text-gray-600">Disponíveis para Adoção</div>
+              <div className="text-sm text-gray-500">Disponíveis para Adoção</div>
             </div>
             
-            <div className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-green-500" />
+            <div className="text-center">
+              <div className="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Users className="h-7 w-7 text-purple-600" />
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">
+              <div className="text-3xl font-semibold text-gray-900 mb-1">
                 {stats?.adoptions || 2156}
               </div>
-              <div className="text-sm text-gray-600">Castrações Realizadas</div>
+              <div className="text-sm text-gray-500">Castrações Realizadas</div>
             </div>
             
-            <div className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-purple-500" />
+            <div className="text-center">
+              <div className="w-14 h-14 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Users className="h-7 w-7 text-orange-600" />
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">15.000</div>
+              <div className="text-3xl font-semibold text-gray-900 mb-1">15.000</div>
               <div className="text-sm text-gray-600">Estimativa na Rua</div>
             </div>
           </div>
