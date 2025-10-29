@@ -471,11 +471,10 @@ const DonationsManagement = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
                     <MaskedInput
-                      mask="phone"
+                      type="phone"
                       value={formData.donorPhone}
-                      onChange={(value) => setFormData({ ...formData, donorPhone: value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="(00) 00000-0000"
+                      onChange={(e) => setFormData({ ...formData, donorPhone: e.target.value })}
+                      className="w-full"
                     />
                   </div>
                 </div>
@@ -484,11 +483,10 @@ const DonationsManagement = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">CPF ou CNPJ</label>
                     <MaskedInput
-                      mask="cpf"
+                      type="cpf"
                       value={formData.donorCPF}
-                      onChange={(value) => setFormData({ ...formData, donorCPF: value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="000.000.000-00"
+                      onChange={(e) => setFormData({ ...formData, donorCPF: e.target.value })}
+                      className="w-full"
                     />
                   </div>
                   <div>
@@ -513,11 +511,10 @@ const DonationsManagement = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
                       <MaskedInput
-                        mask="money"
+                        type="money"
                         value={formData.amount}
-                        onChange={(value) => setFormData({ ...formData, amount: value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="R$ 0,00"
+                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                        className="w-full"
                       />
                     </div>
                     <div>
