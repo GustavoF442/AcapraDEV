@@ -1277,8 +1277,20 @@ app.get('/api/contact', authenticateToken, async (req, res) => {
 // Contacts - Responder contato
 app.patch('/api/contact/:id/respond', authenticateToken, async (req, res) => {
   try {
-    const { response } = req.body;
+    const { response, sendEmail: shouldSendEmail } = req.body;
 
+    // Buscar dados do contato primeiro
+    const { data: contact } = await supabase
+      .from('Contacts')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (!contact) {
+      return res.status(404).json({ error: 'Contato não encontrado' });
+    }
+
+    // Atualizar no banco
     const { data, error } = await supabase
       .from('Contacts')
       .update({ 
@@ -1295,7 +1307,75 @@ app.patch('/api/contact/:id/respond', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    res.json({ message: 'Resposta registrada com sucesso', contact: data });
+    // Enviar email se solicitado
+    if (shouldSendEmail) {
+      setImmediate(async () => {
+        try {
+          await sendSimpleEmail(
+            contact.email,
+            `Resposta: ${contact.subject} - ACAPRA`,
+            `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <style>
+                  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                  .header { background-color: #22c55e; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+                  .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; }
+                  .message-original { background-color: #e5e7eb; padding: 15px; border-left: 4px solid #6b7280; margin: 15px 0; }
+                  .response { background-color: white; padding: 15px; border-left: 4px solid: #22c55e; margin: 15px 0; }
+                  .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <h1>🐾 ACAPRA</h1>
+                    <h2>Resposta à sua Mensagem</h2>
+                  </div>
+                  <div class="content">
+                    <p>Olá <strong>${contact.name}</strong>,</p>
+                    
+                    <p>Obrigado por entrar em contato conosco! Segue nossa resposta:</p>
+                    
+                    <div class="response">
+                      <strong>Nossa Resposta:</strong><br>
+                      ${response.replace(/\n/g, '<br>')}
+                    </div>
+                    
+                    <div class="message-original">
+                      <strong>Sua mensagem original:</strong><br>
+                      <em>"${contact.message.replace(/\n/g, '<br>')}"</em>
+                    </div>
+                    
+                    <p>Se tiver mais dúvidas, não hesite em nos contatar novamente!</p>
+                    
+                    <p>Atenciosamente,<br><strong>Equipe ACAPRA</strong></p>
+                  </div>
+                  <div class="footer">
+                    <p>ACAPRA - Associação de Proteção Animal</p>
+                    <p>Este email foi enviado em resposta à sua mensagem de contato.</p>
+                  </div>
+                </div>
+              </body>
+              </html>
+            `,
+            process.env.EMAIL_FROM
+          );
+          console.log(`✅ Email de resposta enviado para ${contact.email}`);
+        } catch (emailError) {
+          console.error('❌ Erro ao enviar email de resposta:', emailError);
+        }
+      });
+    }
+
+    res.json({ 
+      message: shouldSendEmail 
+        ? 'Resposta registrada e email enviado com sucesso' 
+        : 'Resposta registrada com sucesso', 
+      contact: data 
+    });
   } catch (error) {
     console.error('Erro ao responder contato:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });

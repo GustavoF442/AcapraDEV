@@ -7,6 +7,7 @@ const AdminContacts = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [showResponseModal, setShowResponseModal] = useState(false);
   const [responseText, setResponseText] = useState('');
+  const [sendEmail, setSendEmail] = useState(true);
   const [filters, setFilters] = useState({ status: '' });
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
@@ -25,14 +26,15 @@ const AdminContacts = () => {
   );
 
   const respondMutation = useMutation(
-    ({ id, response }) => api.patch(`/contact/${id}/respond`, { response }),
+    ({ id, response, sendEmail }) => api.patch(`/contact/${id}/respond`, { response, sendEmail }),
     {
-      onSuccess: () => {
+      onSuccess: (data) => {
         queryClient.invalidateQueries('contacts');
         setShowResponseModal(false);
         setResponseText('');
+        setSendEmail(true);
         setSelectedContact(null);
-        alert('Resposta registrada com sucesso! Agora você pode enviar o email manualmente para o contato.');
+        alert(data.data.message || 'Resposta registrada com sucesso!');
       },
       onError: (error) => {
         console.error('Erro ao registrar resposta:', error);
@@ -50,6 +52,7 @@ const AdminContacts = () => {
     }
     setSelectedContact(contact);
     setResponseText('');
+    setSendEmail(true);
     setShowResponseModal(true);
   };
 
@@ -62,7 +65,8 @@ const AdminContacts = () => {
     const contactId = selectedContact.id || selectedContact._id;
     respondMutation.mutate({
       id: contactId,
-      response: responseText.trim()
+      response: responseText.trim(),
+      sendEmail
     });
   };
 
@@ -413,11 +417,27 @@ const AdminContacts = () => {
                     onChange={(e) => setResponseText(e.target.value)}
                     rows="6"
                     className="input-field resize-none"
-                    placeholder="Digite sua resposta aqui. Esta resposta será registrada no sistema e você deverá enviar o email manualmente para o contato."
+                    placeholder="Digite sua resposta aqui..."
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    ⚠️ Importante: Após salvar, envie um email manualmente para {selectedContact.email} com esta resposta.
-                  </p>
+                </div>
+
+                {/* Opção de enviar por email */}
+                <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="sendEmail"
+                    checked={sendEmail}
+                    onChange={(e) => setSendEmail(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="sendEmail" className="flex-1">
+                    <span className="block text-sm font-medium text-gray-900">
+                      📧 Enviar resposta por email automaticamente
+                    </span>
+                    <span className="block text-xs text-gray-600 mt-1">
+                      Se marcado, um email com sua resposta será enviado automaticamente para {selectedContact.email}
+                    </span>
+                  </label>
                 </div>
 
                 {/* Botões */}
