@@ -14,6 +14,7 @@ import Donations from './pages/Donations';
 import Contact from './pages/Contact';
 import News from './pages/News';
 import NewsDetail from './pages/NewsDetail';
+import Events from './pages/Events';
 import AnimalAbuse from './pages/AnimalAbuse';
 import Login from './pages/Login';
 import Dashboard from './pages/admin/Dashboard';
@@ -25,6 +26,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminFinancial from './pages/admin/Financial';
 import DonationsManagement from './pages/admin/DonationsManagement';
 import EventsManagement from './pages/admin/EventsManagement';
+import CastrationsManagement from './pages/admin/CastrationsManagement';
 import AnimalForm from './pages/admin/AnimalForm';
 import NewsForm from './pages/admin/NewsForm';
 import UserForm from './pages/admin/UserForm';
@@ -57,6 +59,7 @@ function App() {
                 <Route path="/doacoes" element={<Donations />} />
                 <Route path="/noticias" element={<News />} />
                 <Route path="/noticias/:id" element={<NewsDetail />} />
+                <Route path="/eventos" element={<Events />} />
                 <Route path="/maus-tratos" element={<AnimalAbuse />} />
                 <Route path="/contato" element={<Contact />} />
                 <Route path="/login" element={<Login />} />
@@ -125,6 +128,11 @@ function App() {
                 <Route path="/admin/eventos" element={
                   <ProtectedRoute>
                     <EventsManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/castracoes" element={
+                  <ProtectedRoute>
+                    <CastrationsManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/animais/novo" element={

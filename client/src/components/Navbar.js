@@ -20,6 +20,7 @@ const Navbar = () => {
   const navLinks = [
     { path: '/', label: 'Início' },
     { path: '/animais', label: 'Adotar' },
+    { path: '/eventos', label: 'Eventos' },
     { path: '/sobre', label: 'Sobre' },
     { path: '/doacoes', label: 'Doações' },
     { path: '/noticias', label: 'Notícias' },

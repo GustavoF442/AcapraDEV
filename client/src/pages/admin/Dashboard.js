@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
-import { Users, Heart, FileText, Mail, Shield, DollarSign, Calendar } from 'lucide-react';
+import { Users, Heart, FileText, Mail, Shield, DollarSign, Calendar, Scissors } from 'lucide-react';
 
 const Dashboard = () => {
   const { data: stats, isLoading } = useQuery('adminStats', () =>
@@ -346,6 +346,15 @@ const Dashboard = () => {
               <Calendar className="h-8 w-8 text-blue-600 mx-auto mb-2" />
               <h4 className="font-medium text-gray-900">Eventos</h4>
               <p className="text-sm text-gray-600 mt-1">Gerenciar eventos</p>
+            </Link>
+
+            <Link
+              to="/admin/castracoes"
+              className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center"
+            >
+              <Scissors className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+              <h4 className="font-medium text-gray-900">Castrações</h4>
+              <p className="text-sm text-gray-600 mt-1">Registrar castrações</p>
             </Link>
           </div>
         </div>
