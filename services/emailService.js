@@ -1,7 +1,16 @@
 const nodemailer = require('nodemailer');
+const { sendEmailViaBrevoAPI } = require('./brevoEmailService');
+
+// Verificar se deve usar API do Brevo ao invés de SMTP
+const useBrevoAPI = !!process.env.BREVO_API_KEY;
 
 // Configurar transporter de email
 const createEmailTransporter = () => {
+  if (useBrevoAPI) {
+    console.log('📧 Usando Brevo API (HTTP) ao invés de SMTP');
+    return null; // Não precisa de transporter SMTP
+  }
+  
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT),
@@ -270,11 +279,19 @@ const emailTemplates = {
 // Função principal para enviar email
 const sendEmail = async (to, templateName, data) => {
   try {
-    const transporter = createEmailTransporter();
     const template = emailTemplates[templateName](data);
+    const from = `ACAPRA <${process.env.EMAIL_FROM}>`;
 
+    // Usar API do Brevo se configurada
+    if (useBrevoAPI) {
+      const result = await sendEmailViaBrevoAPI(to, template.subject, template.html, from);
+      return { success: true, messageId: result.messageId };
+    }
+
+    // Usar SMTP tradicional
+    const transporter = createEmailTransporter();
     const mailOptions = {
-      from: `ACAPRA <${process.env.EMAIL_FROM}>`,
+      from: from,
       to: to,
       subject: template.subject,
       html: template.html
@@ -292,10 +309,18 @@ const sendEmail = async (to, templateName, data) => {
 // Função para enviar email simples (sem template)
 const sendSimpleEmail = async (to, subject, html, replyTo = null) => {
   try {
-    const transporter = createEmailTransporter();
+    const from = `ACAPRA <${process.env.EMAIL_FROM}>`;
 
+    // Usar API do Brevo se configurada
+    if (useBrevoAPI) {
+      const result = await sendEmailViaBrevoAPI(to, subject, html, from);
+      return { success: true, messageId: result.messageId };
+    }
+
+    // Usar SMTP tradicional
+    const transporter = createEmailTransporter();
     const mailOptions = {
-      from: `ACAPRA <${process.env.EMAIL_FROM}>`,
+      from: from,
       to: to,
       subject: subject,
       html: html,

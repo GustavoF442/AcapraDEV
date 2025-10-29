@@ -222,7 +222,10 @@ app.get('/api/test-email', async (req, res) => {
       from: process.env.EMAIL_FROM
     });
 
-    // Teste rápido sem enviar email de verdade
+    // Verificar se tem Brevo API configurada (preferencial)
+    const hasBrevoAPI = !!process.env.BREVO_API_KEY;
+    
+    // Ou se tem configuração SMTP tradicional
     const emailConfigured = !!(
       process.env.EMAIL_HOST && 
       process.env.EMAIL_PORT && 
@@ -231,11 +234,12 @@ app.get('/api/test-email', async (req, res) => {
       process.env.EMAIL_FROM
     );
 
-    if (!emailConfigured) {
+    if (!hasBrevoAPI && !emailConfigured) {
       return res.status(500).json({
         success: false,
         error: 'Configurações de email incompletas',
         config: {
+          BREVO_API_KEY: !!process.env.BREVO_API_KEY,
           EMAIL_HOST: !!process.env.EMAIL_HOST,
           EMAIL_PORT: !!process.env.EMAIL_PORT,
           EMAIL_USER: !!process.env.EMAIL_USER,
