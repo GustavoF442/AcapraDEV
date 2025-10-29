@@ -1,7 +1,5 @@
 # 🐾 ACAPRA - Sistema de Gestão e Adoção de Animais
 
-![ACAPRA Logo](./client/src/materiais/logo%20roxa.png)
-
 ## 📋 Sobre o Projeto
 
 Sistema web completo desenvolvido para a **ACAPRA** (Associação Contra Abuso e Proteção aos Animais de Franca), com o objetivo de facilitar o processo de adoção de animais, gerenciamento de doações, publicação de notícias e comunicação com adotantes e voluntários.
