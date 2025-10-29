@@ -14,7 +14,7 @@ const Footer = () => {
               <span className="text-2xl font-bold">ACAPRA</span>
             </div>
             <p className="text-gray-300 mb-4">
-              A ACAPRA atua há mais de 20 anos em Franca com trabalho 100% voluntário, 
+              A ACAPRA atua há mais de 20 anos em Brusque com trabalho 100% voluntário, 
               resgatando e amparando animais em situação de maus-tratos e abandono.
             </p>
             <div className="flex space-x-4">
@@ -69,12 +69,12 @@ const Footer = () => {
               </li>
               <li className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-primary-400" />
-                <a href="tel:+5516999999999" className="text-gray-300 hover:text-primary-400 transition-colors">(16) 99999-9999</a>
+                <a href="tel:+5548999999999" className="text-gray-300 hover:text-primary-400 transition-colors">(16) 99999-9999</a>
               </li>
               <li className="flex items-start space-x-2">
                 <MapPin className="h-4 w-4 text-primary-400 mt-1" />
                 <span className="text-gray-300">
-                  Franca - SP<br />
+                  brusque - SC<br />
                   Atendemos toda a região
                 </span>
               </li>
@@ -86,7 +86,7 @@ const Footer = () => {
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © 2024 ACAPRA. Todos os direitos reservados.
+              © 2025 ACAPRA. Todos os direitos reservados.
             </p>
             <p className="text-gray-400 text-sm mt-2 md:mt-0">
               Feito com ❤️ para os animais

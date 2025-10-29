@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
 import api from '../services/api';
 import { API_URL } from '../config/api';
 import { Heart, ArrowLeft, CheckCircle } from 'lucide-react';
 import { resolveImageUrl } from '../utils/images';
+import MaskedInput from '../components/MaskedInput';
+import CEPSearch from '../components/CEPSearch';
+import { validateCPF, validatePhone } from '../utils/validators';
+import { unmaskCPF, unmaskPhone } from '../utils/masks';
 
 const AdoptionForm = () => {
   const { id } = useParams();
@@ -14,7 +18,8 @@ const AdoptionForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, formState: { errors }, control, setValue, watch } = useForm();
+  const zipCode = watch('zipCode');
 
   const { data: animal, isLoading } = useQuery(
     ['animal', id],
@@ -22,13 +27,28 @@ const AdoptionForm = () => {
     { enabled: !!id }
   );
 
+  const handleAddressFound = (address) => {
+    if (address) {
+      setValue('street', address.street);
+      setValue('city', address.city);
+      setValue('state', address.state);
+    }
+  };
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
+      // Remover máscaras antes de enviar
+      const submissionData = {
+        ...data,
+        adopterCpf: data.adopterCpf ? unmaskCPF(data.adopterCpf) : '',
+        adopterPhone: data.adopterPhone ? unmaskPhone(data.adopterPhone) : ''
+      };
+
       // Usar axios diretamente sem interceptor para rota pública
       await axios.post(`${API_URL}/adoptions`, {
         animalId: id,
-        ...data
+        ...submissionData
       }, {
         headers: {
           'Content-Type': 'application/json'
@@ -176,10 +196,20 @@ const AdoptionForm = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Telefone *
                 </label>
-                <input
-                  type="tel"
-                  {...register('adopterPhone', { required: 'Telefone é obrigatório' })}
-                  className="input-field"
+                <Controller
+                  name="adopterPhone"
+                  control={control}
+                  rules={{ 
+                    required: 'Telefone é obrigatório',
+                    validate: value => validatePhone(value) || 'Telefone inválido'
+                  }}
+                  render={({ field }) => (
+                    <MaskedInput
+                      type="phone"
+                      {...field}
+                      className="input-field w-full"
+                    />
+                  )}
                 />
                 {errors.adopterPhone && (
                   <p className="text-red-600 text-sm mt-1">{errors.adopterPhone.message}</p>
@@ -190,10 +220,20 @@ const AdoptionForm = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   CPF *
                 </label>
-                <input
-                  type="text"
-                  {...register('adopterCpf', { required: 'CPF é obrigatório' })}
-                  className="input-field"
+                <Controller
+                  name="adopterCpf"
+                  control={control}
+                  rules={{ 
+                    required: 'CPF é obrigatório',
+                    validate: value => validateCPF(value) || 'CPF inválido'
+                  }}
+                  render={({ field }) => (
+                    <MaskedInput
+                      type="cpf"
+                      {...field}
+                      className="input-field w-full"
+                    />
+                  )}
                 />
                 {errors.adopterCpf && (
                   <p className="text-red-600 text-sm mt-1">{errors.adopterCpf.message}</p>
@@ -206,13 +246,51 @@ const AdoptionForm = () => {
               <h3 className="text-lg font-medium text-gray-900 mb-4">Endereço</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
+                  <Controller
+                    name="zipCode"
+                    control={control}
+                    render={({ field }) => (
+                      <CEPSearch
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        onAddressFound={handleAddressFound}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rua e Número
+                    Rua
                   </label>
                   <input
                     type="text"
-                    {...register('adopterAddress')}
+                    {...register('street')}
                     className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Número
+                  </label>
+                  <input
+                    type="text"
+                    {...register('number')}
+                    className="input-field"
+                    placeholder="Número da residência"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Complemento
+                  </label>
+                  <input
+                    type="text"
+                    {...register('complement')}
+                    className="input-field"
+                    placeholder="Apto, bloco, etc."
                   />
                 </div>
 
@@ -222,7 +300,7 @@ const AdoptionForm = () => {
                   </label>
                   <input
                     type="text"
-                    {...register('adopterCity')}
+                    {...register('city')}
                     className="input-field"
                   />
                 </div>
@@ -233,8 +311,10 @@ const AdoptionForm = () => {
                   </label>
                   <input
                     type="text"
-                    {...register('adopterState')}
+                    {...register('state')}
                     className="input-field"
+                    maxLength="2"
+                    placeholder="UF"
                   />
                 </div>
               </div>
