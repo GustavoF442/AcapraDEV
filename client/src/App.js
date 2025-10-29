@@ -11,6 +11,7 @@ import AnimalDetail from './pages/AnimalDetail';
 import AdoptionForm from './pages/AdoptionForm';
 import About from './pages/About';
 import Donations from './pages/Donations';
+import DonationForm from './pages/DonationForm';
 import Contact from './pages/Contact';
 import News from './pages/News';
 import NewsDetail from './pages/NewsDetail';
@@ -57,6 +58,7 @@ function App() {
                 <Route path="/adotar/:id" element={<AdoptionForm />} />
                 <Route path="/sobre" element={<About />} />
                 <Route path="/doacoes" element={<Donations />} />
+                <Route path="/doacoes/nova" element={<DonationForm />} />
                 <Route path="/noticias" element={<News />} />
                 <Route path="/noticias/:id" element={<NewsDetail />} />
                 <Route path="/eventos" element={<Events />} />

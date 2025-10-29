@@ -1,5 +1,6 @@
 import React from 'react';
-import { Heart, CreditCard, MapPin, Phone, Mail, Gift, Users, Truck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Heart, CreditCard, MapPin, Phone, Mail, Gift, Users, Truck, ArrowRight } from 'lucide-react';
 
 const Donations = () => {
   const donationMethods = [
@@ -47,15 +48,25 @@ const Donations = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-20">
+      <section className="text-white py-20" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
+            <Heart className="h-20 w-20 mx-auto mb-6 animate-pulse" />
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
               Como Doar
             </h1>
-            <p className="text-xl md:text-2xl max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8">
               Sua doação salva vidas! Cada contribuição nos ajuda a cuidar melhor dos nossos protegidos
             </p>
+            <Link
+              to="/doacoes/nova"
+              className="inline-flex items-center space-x-3 px-10 py-5 bg-white rounded-full font-bold text-xl shadow-2xl transform hover:scale-105 transition-all"
+              style={{color: '#764ba2'}}
+            >
+              <Gift className="h-7 w-7" />
+              <span>Fazer Doação Agora</span>
+              <ArrowRight className="h-7 w-7" />
+            </Link>
           </div>
         </div>
       </section>

@@ -32,23 +32,23 @@ const CastrationsManagement = () => {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery('castrations', () =>
-    api.get('/castrations').then(res => res.data)
+    api.get('/api/castrations').then(res => res.data)
   );
 
   const { data: events } = useQuery('events', () =>
-    api.get('/events').then(res => res.data.events || [])
+    api.get('/api/events').then(res => res.data.events || [])
   );
 
   const { data: stats } = useQuery('castrations-stats', () =>
-    api.get('/castrations/stats').then(res => res.data.stats)
+    api.get('/api/castrations/stats').then(res => res.data.stats)
   );
 
   const { data: report } = useQuery('castrations-report', () =>
-    api.get('/castrations/report/by-event').then(res => res.data.report)
+    api.get('/api/castrations/report/by-event').then(res => res.data.report)
   );
 
   const createMutation = useMutation(
-    (data) => api.post('/castrations', data),
+    (data) => api.post('/api/castrations', data),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('castrations');
@@ -62,7 +62,7 @@ const CastrationsManagement = () => {
   );
 
   const deleteMutation = useMutation(
-    (id) => api.delete(`/castrations/${id}`),
+    (id) => api.delete(`/api/castrations/${id}`),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('castrations');
