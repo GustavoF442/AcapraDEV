@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { useForm } from 'react-hook-form';
+import axios from 'axios';
 import api from '../services/api';
+import { API_URL } from '../config/api';
 import { Heart, ArrowLeft, CheckCircle } from 'lucide-react';
 import { resolveImageUrl } from '../utils/images';
 
@@ -23,13 +25,20 @@ const AdoptionForm = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await api.post('/adoptions', {
+      // Usar axios diretamente sem interceptor para rota pública
+      await axios.post(`${API_URL}/adoptions`, {
         animalId: id,
         ...data
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
       });
       setSubmitted(true);
     } catch (error) {
-      alert('Erro ao enviar solicitação. Tente novamente.');
+      console.error('Erro ao enviar adoção:', error.response?.data || error.message);
+      alert('Erro ao enviar solicitação: ' + (error.response?.data?.error || 'Tente novamente.'));
     } finally {
       setIsSubmitting(false);
     }

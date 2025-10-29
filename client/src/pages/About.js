@@ -93,7 +93,7 @@ const About = () => {
             </div>
             <div className="relative">
               <img
-                src="./src/materiais/ggg.jpg"
+                src="https://olhardovale.com.br/wp-content/uploads/2023/02/logo_acapra.webp"
                 alt="História da ACAPRA"
                 className="rounded-lg shadow-lg w-full h-96 object-cover"
               />

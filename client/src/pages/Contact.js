@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import api from '../services/api';
+import axios from 'axios';
+import { API_URL } from '../config/api';
 import { Mail, Phone, MapPin, Clock, CheckCircle, Send } from 'lucide-react';
 
 const Contact = () => {
@@ -11,11 +12,18 @@ const Contact = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await api.post('/contact', data);
+      // Usar axios diretamente sem interceptor para rota pública
+      await axios.post(`${API_URL}/contact`, data, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
+      });
       setSubmitted(true);
       reset();
     } catch (error) {
-      alert('Erro ao enviar mensagem. Tente novamente.');
+      console.error('Erro ao enviar contato:', error.response?.data || error.message);
+      alert('Erro ao enviar mensagem: ' + (error.response?.data?.error || 'Tente novamente.'));
     } finally {
       setIsSubmitting(false);
     }
