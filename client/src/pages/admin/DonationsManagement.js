@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { DollarSign, Gift, Search, Filter, Download, Plus, X, Eye, Trash2, TrendingUp, PieChart } from 'lucide-react';
 import api from '../../services/api';
+import MaskedInput from '../../components/MaskedInput';
 
 const DonationsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -469,22 +470,23 @@ const DonationsManagement = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
-                    <input
-                      type="tel"
+                    <MaskedInput
+                      mask="phone"
                       value={formData.donorPhone}
-                      onChange={(e) => setFormData({ ...formData, donorPhone: e.target.value })}
+                      onChange={(value) => setFormData({ ...formData, donorPhone: value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="(00) 00000-0000"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CPF ou CNPJ</label>
+                    <MaskedInput
+                      mask="cpf"
                       value={formData.donorCPF}
-                      onChange={(e) => setFormData({ ...formData, donorCPF: e.target.value })}
+                      onChange={(value) => setFormData({ ...formData, donorCPF: value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="000.000.000-00"
                     />
@@ -510,14 +512,12 @@ const DonationsManagement = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
+                      <MaskedInput
+                        mask="money"
                         value={formData.amount}
-                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                        onChange={(value) => setFormData({ ...formData, amount: value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="0.00"
+                        placeholder="R$ 0,00"
                       />
                     </div>
                     <div>

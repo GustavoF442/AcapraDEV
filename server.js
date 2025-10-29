@@ -559,11 +559,64 @@ app.post('/api/contact', async (req, res) => {
       return res.status(500).json({ error: 'Erro ao enviar mensagem' });
     }
 
-    // Enviar email para ACAPRA notificando novo contato (de forma assíncrona)
+    // Enviar emails (de forma assíncrona)
     setImmediate(async () => {
       try {
+        // 1. Email de confirmação para quem enviou o contato
         await sendSimpleEmail(
-          process.env.EMAIL_USER,
+          email,
+          'Recebemos sua mensagem - ACAPRA',
+          `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+                .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; }
+                .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>🐾 ACAPRA</h1>
+                  <h2>Mensagem Recebida!</h2>
+                </div>
+                <div class="content">
+                  <p>Olá <strong>${name}</strong>,</p>
+                  
+                  <p>Recebemos sua mensagem sobre "<strong>${subject}</strong>" e agradecemos pelo contato!</p>
+                  
+                  <p><strong>Resumo da sua mensagem:</strong></p>
+                  <div style="background-color: white; padding: 15px; border-left: 4px solid #4CAF50; margin: 15px 0;">
+                    ${message.replace(/\n/g, '<br>')}
+                  </div>
+                  
+                  <p>Nossa equipe analisará sua mensagem e retornaremos o mais breve possível através do email <strong>${email}</strong>${phone ? ` ou telefone <strong>${phone}</strong>` : ''}.</p>
+                  
+                  <p>Normalmente respondemos em até 48 horas úteis.</p>
+                  
+                  <p>Obrigado pelo interesse na ACAPRA!</p>
+                  
+                  <p>Atenciosamente,<br><strong>Equipe ACAPRA</strong></p>
+                </div>
+                <div class="footer">
+                  <p>Este é um email automático de confirmação.</p>
+                  <p>Para mais informações, visite nosso site.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `,
+          process.env.EMAIL_FROM
+        );
+        console.log('✅ Email de confirmação enviado para o remetente');
+
+        // 2. Email de notificação para ACAPRA
+        await sendSimpleEmail(
+          process.env.EMAIL_FROM,
           `Novo Contato do Site - ${subject}`,
           `
             <h2>Nova Mensagem de Contato</h2>
@@ -577,9 +630,9 @@ app.post('/api/contact', async (req, res) => {
           `,
           email
         );
-        console.log('✅ Email de notificação de contato enviado');
+        console.log('✅ Email de notificação de contato enviado para ACAPRA');
       } catch (emailError) {
-        console.error('❌ Erro ao enviar email de contato:', emailError);
+        console.error('❌ Erro ao enviar emails de contato:', emailError);
       }
     });
 
@@ -1903,7 +1956,8 @@ app.post('/api/donations', authenticateToken, async (req, res) => {
       .from('Donations')
       .insert([{
         ...req.body,
-        confirmedBy: req.user.id,
+        registeredBy: req.user?.id || null,
+        donationDate: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }])
@@ -2271,6 +2325,46 @@ app.delete('/api/events/:id', authenticateToken, adminOnly, async (req, res) => 
     res.json({ message: 'Evento removido com sucesso' });
   } catch (error) {
     console.error('Erro ao deletar evento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Enviar lembrete de evento
+app.post('/api/events/:id/send-reminder', authenticateToken, async (req, res) => {
+  try {
+    const { data: event, error: eventError } = await supabase
+      .from('Events')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (eventError || !event) {
+      return res.status(404).json({ error: 'Evento não encontrado' });
+    }
+
+    // Enviar email de lembrete para o admin (você pode expandir para enviar para participantes registrados)
+    setImmediate(async () => {
+      try {
+        await sendEmail(
+          process.env.EMAIL_FROM,
+          'eventReminder',
+          {
+            eventName: event.title,
+            eventDate: new Date(event.eventDate).toLocaleDateString('pt-BR'),
+            eventTime: event.eventTime,
+            location: event.location,
+            description: event.description
+          }
+        );
+        console.log(`✅ Lembrete de evento enviado: ${event.title}`);
+      } catch (emailError) {
+        console.error('❌ Erro ao enviar lembrete de evento:', emailError);
+      }
+    });
+
+    res.json({ message: 'Lembrete enviado com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao enviar lembrete:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
