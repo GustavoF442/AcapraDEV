@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
-import { Users, Heart, FileText, Mail, Shield } from 'lucide-react';
+import { Users, Heart, FileText, Mail, Shield, DollarSign, Calendar } from 'lucide-react';
 
 const Dashboard = () => {
   const { data: stats, isLoading } = useQuery('adminStats', () =>
@@ -284,7 +284,7 @@ const Dashboard = () => {
         {/* Ações Rápidas */}
         <div className="mt-8">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Ações Rápidas</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <Link
               to="/admin/animais/novo"
               className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center"
@@ -328,6 +328,24 @@ const Dashboard = () => {
               <Shield className="h-8 w-8 text-primary-600 mx-auto mb-2" />
               <h4 className="font-medium text-gray-900">Colaboradores</h4>
               <p className="text-sm text-gray-600 mt-1">Gerenciar usuários</p>
+            </Link>
+
+            <Link
+              to="/admin/doacoes"
+              className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center"
+            >
+              <DollarSign className="h-8 w-8 text-green-600 mx-auto mb-2" />
+              <h4 className="font-medium text-gray-900">Doações</h4>
+              <p className="text-sm text-gray-600 mt-1">Gerenciar doações</p>
+            </Link>
+
+            <Link
+              to="/admin/eventos"
+              className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center"
+            >
+              <Calendar className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+              <h4 className="font-medium text-gray-900">Eventos</h4>
+              <p className="text-sm text-gray-600 mt-1">Gerenciar eventos</p>
             </Link>
           </div>
         </div>

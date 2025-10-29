@@ -23,6 +23,8 @@ import AdminNews from './pages/admin/News';
 import AdminContacts from './pages/admin/Contacts';
 import AdminUsers from './pages/admin/Users';
 import AdminFinancial from './pages/admin/Financial';
+import DonationsManagement from './pages/admin/DonationsManagement';
+import EventsManagement from './pages/admin/EventsManagement';
 import AnimalForm from './pages/admin/AnimalForm';
 import NewsForm from './pages/admin/NewsForm';
 import UserForm from './pages/admin/UserForm';
@@ -113,6 +115,16 @@ function App() {
                 <Route path="/admin/financeiro" element={
                   <ProtectedRoute>
                     <AdminFinancial />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/doacoes" element={
+                  <ProtectedRoute>
+                    <DonationsManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/eventos" element={
+                  <ProtectedRoute>
+                    <EventsManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/animais/novo" element={
