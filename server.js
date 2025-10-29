@@ -13,6 +13,23 @@ const { sendEmail, sendSimpleEmail } = require('./services/emailService');
 
 const app = express();
 
+// Helper: Converter valor monetário brasileiro (1.234,56) para decimal (1234.56)
+function parseMoneyValue(value) {
+  if (!value) return 0;
+  if (typeof value === 'number') return value;
+  
+  // Remove "R$", espaços e pontos (separador de milhar)
+  let cleanValue = value.toString()
+    .replace(/R\$/g, '')
+    .replace(/\s/g, '')
+    .replace(/\./g, '');
+  
+  // Substitui vírgula por ponto (decimal)
+  cleanValue = cleanValue.replace(',', '.');
+  
+  return parseFloat(cleanValue) || 0;
+}
+
 // Configuração do Multer - usar memoryStorage para Supabase
 const storage = multer.memoryStorage();
 
@@ -2119,10 +2136,16 @@ app.get('/api/donations', authenticateToken, async (req, res) => {
 // Donations - Criar nova doação
 app.post('/api/donations', authenticateToken, async (req, res) => {
   try {
+    // Converter valor monetário se presente
+    const donationData = { ...req.body };
+    if (donationData.amount) {
+      donationData.amount = parseMoneyValue(donationData.amount);
+    }
+    
     const { data, error } = await supabase
       .from('Donations')
       .insert([{
-        ...req.body,
+        ...donationData,
         registeredBy: req.user?.id || null,
         donationDate: new Date().toISOString(),
         createdAt: new Date().toISOString(),
@@ -2740,7 +2763,7 @@ app.post('/api/donations', async (req, res) => {
         donorPhone,
         donorCPF,
         donationType,
-        amount: amount || null,
+        amount: amount ? parseMoneyValue(amount) : null,
         description,
         paymentMethod,
         status: 'pendente',

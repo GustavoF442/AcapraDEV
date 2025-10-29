@@ -1,19 +1,28 @@
 // Utilitários para máscaras de campos
 
-// Máscara para CPF (000.000.000-00)
+// Máscara para CPF (000.000.000-00) ou CNPJ (00.000.000/0000-00)
 export const maskCPF = (value) => {
   if (!value) return '';
   
   // Remove tudo que não é dígito
   value = value.replace(/\D/g, '');
   
-  // Limita a 11 dígitos
-  value = value.substring(0, 11);
+  // Limita a 14 dígitos (CNPJ)
+  value = value.substring(0, 14);
   
-  // Aplica a máscara
-  value = value.replace(/(\d{3})(\d)/, '$1.$2');
-  value = value.replace(/(\d{3})(\d)/, '$1.$2');
-  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  // Aplica máscara de CPF (11 dígitos) ou CNPJ (14 dígitos)
+  if (value.length <= 11) {
+    // Máscara de CPF: 000.000.000-00
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  } else {
+    // Máscara de CNPJ: 00.000.000/0000-00
+    value = value.replace(/(\d{2})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d)/, '$1/$2');
+    value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+  }
   
   return value;
 };

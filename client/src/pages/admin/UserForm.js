@@ -197,7 +197,7 @@ const UserForm = () => {
                     }
                   })}
                   className="input-field pl-10"
-                  placeholder="email@exemplo.com"
+                  placeholder="Email"
                 />
               </div>
               {errors.email && (
@@ -215,7 +215,7 @@ const UserForm = () => {
                   type="tel"
                   {...register('phone')}
                   className="input-field pl-10"
-                  placeholder="(11) 99999-9999"
+                  placeholder="Telefone"
                 />
               </div>
             </div>

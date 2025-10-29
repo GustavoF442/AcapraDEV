@@ -81,7 +81,7 @@ const MaskedInput = ({
     
     switch (type) {
       case 'cpf':
-        return '000.000.000-00';
+        return 'CPF ou CNPJ';
       case 'phone':
         return '(00) 00000-0000';
       case 'cep':

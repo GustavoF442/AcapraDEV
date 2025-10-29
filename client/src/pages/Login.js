@@ -82,7 +82,7 @@ const Login = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className="input-field pl-10"
-                  placeholder="seu@email.com"
+                  placeholder="Email"
                 />
               </div>
             </div>
@@ -104,7 +104,7 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   className="input-field pl-10 pr-10"
-                  placeholder="••••••••"
+                  placeholder="Senha"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button

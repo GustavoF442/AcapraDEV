@@ -179,7 +179,7 @@ const Contact = () => {
                       }
                     })}
                     className="input-field"
-                    placeholder="seu@email.com"
+                    placeholder="Email"
                   />
                   {errors.email && (
                     <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
