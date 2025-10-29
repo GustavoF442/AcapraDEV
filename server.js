@@ -209,6 +209,87 @@ app.get('/api/test-supabase', async (_req, res) => {
   }
 });
 
+// Endpoint para testar envio de email
+app.get('/api/test-email', async (req, res) => {
+  try {
+    const testEmail = req.query.email || 'teste@acapra.com';
+    
+    console.log('🧪 Testando envio de email...');
+    console.log('Configurações:', {
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      user: process.env.EMAIL_USER,
+      from: process.env.EMAIL_FROM
+    });
+
+    // Teste rápido sem enviar email de verdade
+    const emailConfigured = !!(
+      process.env.EMAIL_HOST && 
+      process.env.EMAIL_PORT && 
+      process.env.EMAIL_USER && 
+      process.env.EMAIL_PASS &&
+      process.env.EMAIL_FROM
+    );
+
+    if (!emailConfigured) {
+      return res.status(500).json({
+        success: false,
+        error: 'Configurações de email incompletas',
+        config: {
+          EMAIL_HOST: !!process.env.EMAIL_HOST,
+          EMAIL_PORT: !!process.env.EMAIL_PORT,
+          EMAIL_USER: !!process.env.EMAIL_USER,
+          EMAIL_PASS: !!process.env.EMAIL_PASS,
+          EMAIL_FROM: !!process.env.EMAIL_FROM
+        }
+      });
+    }
+
+    // Tentar enviar email de teste (com timeout curto)
+    try {
+      const emailResult = await Promise.race([
+        sendSimpleEmail(
+          testEmail,
+          'Teste ACAPRA - Sistema de Email',
+          '<h1>Email de Teste</h1><p>Se você recebeu este email, o sistema está funcionando!</p>',
+          process.env.EMAIL_FROM
+        ),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout de 5 segundos no envio de email')), 5000)
+        )
+      ]);
+
+      res.json({
+        success: true,
+        message: 'Email enviado com sucesso!',
+        to: testEmail,
+        emailResult,
+        timestamp: new Date()
+      });
+    } catch (emailError) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao enviar email',
+        details: emailError.message,
+        config: {
+          host: process.env.EMAIL_HOST,
+          port: process.env.EMAIL_PORT,
+          user: process.env.EMAIL_USER?.substring(0, 5) + '***'
+        },
+        timestamp: new Date()
+      });
+    }
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Erro no teste de email',
+      details: error.message,
+      timestamp: new Date()
+    });
+  }
+});
+
 // Criar cliente Supabase global (reutilizar do topo do arquivo)
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -474,28 +555,29 @@ app.post('/api/contact', async (req, res) => {
       return res.status(500).json({ error: 'Erro ao enviar mensagem' });
     }
 
-    // Enviar email para ACAPRA notificando novo contato
-    try {
-      await sendSimpleEmail(
-        process.env.EMAIL_USER,
-        `Novo Contato do Site - ${subject}`,
-        `
-          <h2>Nova Mensagem de Contato</h2>
-          <p><strong>Nome:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          ${phone ? `<p><strong>Telefone:</strong> ${phone}</p>` : ''}
-          <p><strong>Assunto:</strong> ${subject}</p>
-          <p><strong>Mensagem:</strong></p>
-          <p>${message.replace(/\n/g, '<br>')}</p>
-          <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
-        `,
-        email
-      );
-      console.log('✅ Email de notificação de contato enviado');
-    } catch (emailError) {
-      console.error('❌ Erro ao enviar email de contato:', emailError);
-      // Não falhar a requisição por erro de email
-    }
+    // Enviar email para ACAPRA notificando novo contato (de forma assíncrona)
+    setImmediate(async () => {
+      try {
+        await sendSimpleEmail(
+          process.env.EMAIL_USER,
+          `Novo Contato do Site - ${subject}`,
+          `
+            <h2>Nova Mensagem de Contato</h2>
+            <p><strong>Nome:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            ${phone ? `<p><strong>Telefone:</strong> ${phone}</p>` : ''}
+            <p><strong>Assunto:</strong> ${subject}</p>
+            <p><strong>Mensagem:</strong></p>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+            <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+          `,
+          email
+        );
+        console.log('✅ Email de notificação de contato enviado');
+      } catch (emailError) {
+        console.error('❌ Erro ao enviar email de contato:', emailError);
+      }
+    });
 
     res.status(201).json({ 
       message: 'Mensagem enviada com sucesso! Entraremos em contato em breve.',
@@ -595,40 +677,41 @@ app.post('/api/adoptions', async (req, res) => {
       return res.status(500).json({ error: 'Erro ao enviar solicitação de adoção: ' + error.message });
     }
 
-    // Enviar emails de confirmação
-    try {
-      // Email de confirmação para o adotante
-      await sendEmail(
-        adopterEmail,
-        'adoptionConfirmation',
-        {
-          adopterName: adopterName,
-          animalName: animal.name,
-          adopterEmail: adopterEmail,
-          adopterPhone: adopterPhone
-        }
-      );
-      console.log('✅ Email de confirmação enviado para o adotante');
+    // Enviar emails de confirmação (de forma assíncrona para não bloquear resposta)
+    setImmediate(async () => {
+      try {
+        // Email de confirmação para o adotante
+        await sendEmail(
+          adopterEmail,
+          'adoptionConfirmation',
+          {
+            adopterName: adopterName,
+            animalName: animal.name,
+            adopterEmail: adopterEmail,
+            adopterPhone: adopterPhone
+          }
+        );
+        console.log('✅ Email de confirmação enviado para o adotante');
 
-      // Email de notificação para ACAPRA
-      await sendEmail(
-        process.env.EMAIL_USER,
-        'adoptionReceived',
-        {
-          animalName: animal.name,
-          animalId: animal.id,
-          adopterName: adopterName,
-          adopterEmail: adopterEmail,
-          adopterPhone: adopterPhone,
-          city: adopterCity,
-          motivation: motivation
-        }
-      );
-      console.log('✅ Email de notificação enviado para ACAPRA');
-    } catch (emailError) {
-      console.error('❌ Erro ao enviar emails de adoção:', emailError);
-      // Não falhar a requisição por erro de email
-    }
+        // Email de notificação para ACAPRA
+        await sendEmail(
+          process.env.EMAIL_USER,
+          'adoptionReceived',
+          {
+            animalName: animal.name,
+            animalId: animal.id,
+            adopterName: adopterName,
+            adopterEmail: adopterEmail,
+            adopterPhone: adopterPhone,
+            city: adopterCity,
+            motivation: motivation
+          }
+        );
+        console.log('✅ Email de notificação enviado para ACAPRA');
+      } catch (emailError) {
+        console.error('❌ Erro ao enviar emails de adoção:', emailError);
+      }
+    });
 
     res.status(201).json({ 
       message: 'Solicitação de adoção enviada com sucesso! Analisaremos seu pedido e entraremos em contato.',
