@@ -145,15 +145,21 @@ const NewsDetail = () => {
 
             {/* Conteúdo */}
             <div className="prose prose-lg max-w-none">
-              {article.content.split('\n').map((paragraph, index) => (
-                <p key={index} className="mb-4 text-gray-700 leading-relaxed">
-                  {paragraph}
+              {article.content && typeof article.content === 'string' ? (
+                article.content.split('\n').map((paragraph, index) => (
+                  <p key={index} className="mb-4 text-gray-700 leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))
+              ) : (
+                <p className="mb-4 text-gray-700 leading-relaxed">
+                  {article.content || 'Conteúdo não disponível'}
                 </p>
-              ))}
+              )}
             </div>
 
             {/* Tags */}
-            {article.tags && article.tags.length > 0 && (
+            {article.tags && Array.isArray(article.tags) && article.tags.length > 0 && (
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="flex flex-wrap gap-2">
                   {article.tags.map((tag, index) => (

@@ -2,9 +2,7 @@ import React from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowRight, Heart, Users, Award, Sparkles, Star } from 'lucide-react';
-import AnimatedStats from '../components/AnimatedStats';
-import AnimatedBackground from '../components/AnimatedBackground';
+import { ArrowRight, Heart, Home as HomeIcon, Users, Sparkles } from 'lucide-react';
 import { resolveImageUrl } from '../utils/images';
 
 const Home = () => {
@@ -21,213 +19,153 @@ const Home = () => {
   );
 
   return (
-    <div className="relative">
-      <AnimatedBackground />
-      
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-pink-900/20"></div>
-        
-        {/* Floating Elements */}
-        <div className="absolute top-20 left-10 animate-bounce delay-1000">
-          <Star className="h-8 w-8 text-white/30" />
-        </div>
-        <div className="absolute top-40 right-20 animate-bounce delay-2000">
-          <Heart className="h-6 w-6 text-pink-300/50" />
-        </div>
-        <div className="absolute bottom-40 left-20 animate-bounce delay-3000">
-          <Sparkles className="h-10 w-10 text-purple-300/40" />
-        </div>
-        
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-8 animate-fade-in">
-            <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-6">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Resgatando vidas, unindo corações
-            </div>
+    <div>
+      {/* Hero Section - Clean Design */}
+      <section className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-pink-600 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center">
+          <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-8">
+            <Sparkles className="h-4 w-4 mr-2" />
+            Resgatando vidas, unindo corações
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 animate-fade-in-up">
-            <span className="bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-              Adote um
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
+            Adote um<br />
+            <span className="bg-gradient-to-r from-pink-200 to-white bg-clip-text text-transparent">
               Amigo
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-4xl mx-auto leading-relaxed animate-fade-in-up delay-200">
-            Somos voluntários dedicados a dar uma segunda oportunidade a 
-            cães e gatos em Franca. Conheça o nosso trabalho e faça parte 
-            desta missão.
+          <p className="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto">
+            Somos voluntários dedicados a dar uma segunda oportunidade a cães e gatos em Franca. Conheça o nosso trabalho e faça parte desta missão.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-6 justify-center animate-fade-in-up delay-400">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               to="/animais" 
-              className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-2xl"
+              className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white font-semibold rounded-full hover:shadow-xl transition-all"
             >
-              <span className="relative z-10 flex items-center">
-                Quero Adotar
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              Quero Adotar
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
             
             <Link 
               to="/doacoes" 
-              className="group px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-full border-2 border-white/30 transition-all duration-300 transform hover:scale-105 hover:bg-white/20"
+              className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-full border-2 border-white/50 hover:bg-white/20 transition-all"
             >
-              <span className="flex items-center">
-                Como Ajudar
-                <Heart className="ml-2 h-5 w-5 group-hover:text-pink-300 transition-colors" />
-              </span>
+              Como Ajudar
+              <Heart className="ml-2 h-5 w-5" />
             </Link>
           </div>
         </div>
-        
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-pulse"></div>
-          </div>
-        </div>
       </section>
 
-      {/* Nossa Missão */}
-      <section className="relative py-20 bg-white">
+      {/* Estatísticas - Clean Cards */}
+      <section className="bg-gradient-to-br from-purple-600 via-purple-700 to-pink-600 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              A nossa Missão
-            </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Users className="h-10 w-10 text-white" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Heart className="h-8 w-8 text-red-500" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Quem Somos</h3>
-              <p className="text-gray-600 leading-relaxed">
-                A ACAPRA atua há mais de 20 anos em Franca, com trabalhos 100% voluntário, 
-                resgatando e amparando animais em situação de maus-tratos e abandono.
-              </p>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {stats?.adopted || 1247}
+              </div>
+              <div className="text-sm text-gray-600">Animais Adotados</div>
             </div>
             
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Heart className="h-10 w-10 text-white" />
+            <div className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <HomeIcon className="h-8 w-8 text-blue-500" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">O Que Fazemos</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Lutamos contra o sofrimento animal, promovemos resgates, cuidados 
-                veterinários, castrações e o mais importante: a adoção responsável.
-              </p>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {stats?.available || 89}
+              </div>
+              <div className="text-sm text-gray-600">Disponíveis para Adoção</div>
             </div>
             
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Award className="h-10 w-10 text-white" />
+            <div className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-green-500" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Desafios Atuais</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Enfrentamos uma dívida crítica que limita os nossos atendimentos. 
-                Contribuímos firmes com campanhas de arrecadação e educação sobre posse responsável.
-              </p>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {stats?.adoptions || 2156}
+              </div>
+              <div className="text-sm text-gray-600">Castrações Realizadas</div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-purple-500" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">15.000</div>
+              <div className="text-sm text-gray-600">Estimativa na Rua</div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Estatísticas */}
-      <section className="py-20 bg-gradient-to-r from-purple-50 to-pink-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              Nosso Impacto
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Números que mostram o resultado do nosso trabalho e dedicação
-            </p>
-          </div>
-          
-          <AnimatedStats stats={stats?.summary} />
         </div>
       </section>
 
       {/* Animais em Destaque */}
       {featuredAnimals && featuredAnimals.length > 0 && (
-        <section className="py-20 bg-white">
+        <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
                 Animais Esperando por Você
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className="text-gray-600">
                 Conheça alguns dos nossos amigos que estão procurando um lar cheio de amor
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredAnimals.map((animal) => (
-                <div key={animal.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredAnimals.slice(0, 6).map((animal) => (
+                <Link
+                  key={animal.id}
+                  to={`/animais/${animal.id}`}
+                  className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden"
+                >
                   <div className="aspect-w-16 aspect-h-12 overflow-hidden">
                     <img
                       src={animal.photos?.[0] ? resolveImageUrl(animal.photos[0]) : '/placeholder-animal.jpg'}
                       alt={animal.name}
-                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{animal.name}</h3>
-                    <p className="text-gray-600 mb-2">{animal.species} • {animal.age} • {animal.size}</p>
-                    <p className="text-gray-700 mb-4 line-clamp-2">{animal.description}</p>
-                    <Link
-                      to={`/animais/${animal.id}`}
-                      className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium group-hover:translate-x-1 transition-transform"
-                    >
-                      Conhecer {animal.name}
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Link>
+                  <div className="p-5">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{animal.name}</h3>
+                    <p className="text-sm text-gray-600">{animal.species} • {animal.age}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
             
-            <div className="text-center mt-16">
-              <Link to="/animais" className="btn-primary text-lg px-8 py-4">
+            <div className="text-center mt-10">
+              <Link to="/animais" className="inline-flex items-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-700 transition-colors">
                 Ver Todos os Animais
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
           </div>
         </section>
       )}
 
-      {/* Call to Action */}
-      <section className="py-20 bg-gradient-to-r from-purple-600 to-pink-600 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold mb-6">
+      {/* Call to Action - Clean Design */}
+      <section className="bg-gradient-to-r from-pink-600 to-purple-600 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Faça a Diferença na Vida de um Animal
           </h2>
-          <p className="text-xl mb-12 max-w-3xl mx-auto leading-relaxed">
-            Além da adoção, você pode ajudar através de doações, 
-            voluntariado ou compartilhando nosso trabalho
+          <p className="text-lg text-white/90 mb-8">
+            Além da adoção, você pode ajudar através de doações, voluntariado ou compartilhando nosso trabalho
           </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link to="/doacoes" className="group px-8 py-4 bg-white text-purple-600 hover:bg-gray-100 font-bold rounded-full transition-all duration-300 transform hover:scale-105">
-              <span className="flex items-center">
-                Como Doar
-                <Heart className="ml-2 h-5 w-5 group-hover:text-red-500 transition-colors" />
-              </span>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/doacoes" className="inline-flex items-center justify-center px-8 py-4 bg-white text-purple-600 font-semibold rounded-full hover:bg-gray-50 transition-colors">
+              Como Doar
+              <Heart className="ml-2 h-5 w-5" />
             </Link>
-            <Link to="/contato" className="group px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-purple-600 font-bold rounded-full transition-all duration-300 transform hover:scale-105">
-              <span className="flex items-center">
-                Ser Voluntário
-                <Users className="ml-2 h-5 w-5" />
-              </span>
+            <Link to="/contato" className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors">
+              Ser Voluntário
+              <Users className="ml-2 h-5 w-5" />
             </Link>
           </div>
         </div>
@@ -235,72 +173,55 @@ const Home = () => {
 
       {/* Últimas Notícias */}
       {latestNews && latestNews.length > 0 && (
-        <section className="py-20 bg-gray-50">
+        <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
                 Últimas Notícias
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-gray-600">
                 Fique por dentro das novidades da ACAPRA
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {latestNews.map((news) => (
-                <div key={news.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
-                  {news.image && (
-                    <img
-                      src={`/uploads/${news.image.path}`}
-                      alt={news.title}
-                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                  )}
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{news.title}</h3>
-                    <p className="text-gray-600 mb-4">{news.excerpt}</p>
-                    <Link
-                      to={`/noticias/${news.id}`}
-                      className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium group-hover:translate-x-1 transition-transform"
-                    >
-                      Ler mais
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Link>
-                  </div>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {latestNews.map((news) => {
+                const imageUrl = news.image 
+                  ? (typeof news.image === 'string' ? news.image : news.image.url || `/uploads/${news.image.path}`)
+                  : null;
+                
+                return (
+                  <Link
+                    key={news.id || news._id}
+                    to={`/noticias/${news.id || news._id}`}
+                    className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden"
+                  >
+                    {imageUrl && (
+                      <img
+                        src={imageUrl}
+                        alt={news.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => e.target.style.display = 'none'}
+                      />
+                    )}
+                    <div className="p-5">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{news.title}</h3>
+                      <p className="text-sm text-gray-600 line-clamp-2">{news.excerpt}</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
             
-            <div className="text-center mt-16">
-              <Link to="/noticias" className="btn-secondary text-lg px-8 py-4">
+            <div className="text-center mt-10">
+              <Link to="/noticias" className="inline-flex items-center px-6 py-3 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition-colors">
                 Ver Todas as Notícias
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
           </div>
         </section>
       )}
-      
-      {/* Call to Action Final */}
-      <section className="relative py-20 bg-gradient-to-r from-purple-600 to-pink-600 overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Faça a Diferença Hoje
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Cada animal resgatado é uma vida transformada. Junte-se a nós nessa missão de amor e compaixão.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/animais" className="btn-primary bg-white text-purple-600 hover:bg-gray-100 text-lg px-8 py-4">
-              <Heart className="mr-2 h-5 w-5" />
-              Adotar um Animal
-            </Link>
-            <Link to="/doacoes" className="btn-secondary border-white text-white hover:bg-white hover:text-purple-600 text-lg px-8 py-4">
-              Fazer uma Doação
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
