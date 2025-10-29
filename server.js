@@ -9,6 +9,7 @@ const helmet = require('helmet');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const { sendEmail, sendSimpleEmail } = require('./services/emailService');
 
 const app = express();
 
@@ -473,6 +474,29 @@ app.post('/api/contact', async (req, res) => {
       return res.status(500).json({ error: 'Erro ao enviar mensagem' });
     }
 
+    // Enviar email para ACAPRA notificando novo contato
+    try {
+      await sendSimpleEmail(
+        process.env.EMAIL_USER,
+        `Novo Contato do Site - ${subject}`,
+        `
+          <h2>Nova Mensagem de Contato</h2>
+          <p><strong>Nome:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          ${phone ? `<p><strong>Telefone:</strong> ${phone}</p>` : ''}
+          <p><strong>Assunto:</strong> ${subject}</p>
+          <p><strong>Mensagem:</strong></p>
+          <p>${message.replace(/\n/g, '<br>')}</p>
+          <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+        `,
+        email
+      );
+      console.log('✅ Email de notificação de contato enviado');
+    } catch (emailError) {
+      console.error('❌ Erro ao enviar email de contato:', emailError);
+      // Não falhar a requisição por erro de email
+    }
+
     res.status(201).json({ 
       message: 'Mensagem enviada com sucesso! Entraremos em contato em breve.',
       contact: data 
@@ -569,6 +593,41 @@ app.post('/api/adoptions', async (req, res) => {
     if (error) {
       console.error('Erro ao criar solicitação de adoção:', error);
       return res.status(500).json({ error: 'Erro ao enviar solicitação de adoção: ' + error.message });
+    }
+
+    // Enviar emails de confirmação
+    try {
+      // Email de confirmação para o adotante
+      await sendEmail(
+        adopterEmail,
+        'adoptionConfirmation',
+        {
+          adopterName: adopterName,
+          animalName: animal.name,
+          adopterEmail: adopterEmail,
+          adopterPhone: adopterPhone
+        }
+      );
+      console.log('✅ Email de confirmação enviado para o adotante');
+
+      // Email de notificação para ACAPRA
+      await sendEmail(
+        process.env.EMAIL_USER,
+        'adoptionReceived',
+        {
+          animalName: animal.name,
+          animalId: animal.id,
+          adopterName: adopterName,
+          adopterEmail: adopterEmail,
+          adopterPhone: adopterPhone,
+          city: adopterCity,
+          motivation: motivation
+        }
+      );
+      console.log('✅ Email de notificação enviado para ACAPRA');
+    } catch (emailError) {
+      console.error('❌ Erro ao enviar emails de adoção:', emailError);
+      // Não falhar a requisição por erro de email
     }
 
     res.status(201).json({ 
@@ -1374,12 +1433,36 @@ app.get('/api/animals/:animalId/adoptions', authenticateToken, async (req, res) 
 // Adoptions - Atualizar status
 app.patch('/api/adoptions/:id/status', authenticateToken, async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, notes } = req.body;
 
+    // Buscar adoção e animal relacionado
+    const { data: adoption, error: fetchError } = await supabase
+      .from('Adoptions')
+      .select('*, animalId')
+      .eq('id', req.params.id)
+      .single();
+
+    if (fetchError || !adoption) {
+      return res.status(404).json({ error: 'Adoção não encontrada' });
+    }
+
+    // Buscar informações do animal
+    const { data: animal, error: animalError } = await supabase
+      .from('Animals')
+      .select('id, name, status')
+      .eq('id', adoption.animalId)
+      .single();
+
+    if (animalError || !animal) {
+      return res.status(404).json({ error: 'Animal não encontrado' });
+    }
+
+    // Atualizar status da adoção
     const { data, error } = await supabase
       .from('Adoptions')
       .update({ 
         status,
+        notes: notes || adoption.notes,
         reviewedAt: new Date().toISOString(),
         reviewedBy: req.user.id
       })
@@ -1391,7 +1474,82 @@ app.patch('/api/adoptions/:id/status', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    res.json({ message: 'Status atualizado com sucesso', adoption: data });
+    // Se aprovado, marcar animal como adotado
+    if (status === 'aprovado') {
+      const { error: updateAnimalError } = await supabase
+        .from('Animals')
+        .update({ 
+          status: 'adotado',
+          updatedAt: new Date().toISOString()
+        })
+        .eq('id', adoption.animalId);
+
+      if (updateAnimalError) {
+        console.error('❌ Erro ao atualizar status do animal:', updateAnimalError);
+      } else {
+        console.log(`✅ Animal ${animal.name} marcado como adotado`);
+      }
+
+      // Rejeitar outras adoções pendentes do mesmo animal
+      await supabase
+        .from('Adoptions')
+        .update({ 
+          status: 'rejeitado',
+          notes: 'Animal já foi adotado por outro solicitante',
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: req.user.id
+        })
+        .eq('animalId', adoption.animalId)
+        .neq('id', req.params.id)
+        .in('status', ['pendente', 'em análise']);
+    }
+
+    // Se rejeitado e animal estava "em processo", voltar para disponível
+    if (status === 'rejeitado' && animal.status === 'em processo') {
+      // Verificar se não há outras adoções aprovadas para este animal
+      const { data: otherApprovals } = await supabase
+        .from('Adoptions')
+        .select('id')
+        .eq('animalId', adoption.animalId)
+        .eq('status', 'aprovado')
+        .limit(1);
+
+      if (!otherApprovals || otherApprovals.length === 0) {
+        await supabase
+          .from('Animals')
+          .update({ 
+            status: 'disponível',
+            updatedAt: new Date().toISOString()
+          })
+          .eq('id', adoption.animalId);
+        
+        console.log(`✅ Animal ${animal.name} voltou para disponível`);
+      }
+    }
+
+    // Enviar email ao adotante notificando mudança de status
+    try {
+      await sendEmail(
+        adoption.adopterEmail,
+        'adoptionStatusUpdate',
+        {
+          adopterName: adoption.adopterName,
+          animalName: animal.name,
+          status: status,
+          notes: notes || ''
+        }
+      );
+      console.log(`✅ Email de ${status} enviado para ${adoption.adopterEmail}`);
+    } catch (emailError) {
+      console.error('❌ Erro ao enviar email de atualização:', emailError);
+      // Não falhar a requisição por erro de email
+    }
+
+    res.json({ 
+      message: 'Status atualizado com sucesso', 
+      adoption: data,
+      animalUpdated: status === 'aprovado' ? 'Animal marcado como adotado' : null
+    });
   } catch (error) {
     console.error('Erro ao atualizar status adoção:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -1870,6 +2028,373 @@ app.get('/api/financial-stats', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao buscar estatísticas financeiras:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// ========== ROTAS DE EVENTOS ==========
+
+// Listar eventos (público - apenas eventos públicos; admin - todos)
+app.get('/api/events', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, eventType, upcoming } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('Events')
+      .select('*', { count: 'exact' });
+
+    // Filtros
+    if (status) query = query.eq('status', status);
+    if (eventType) query = query.eq('eventType', eventType);
+    if (upcoming === 'true') {
+      query = query.gte('eventDate', new Date().toISOString());
+    }
+
+    query = query
+      .range(offset, offset + limit - 1)
+      .order('eventDate', { ascending: true });
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('Erro ao listar eventos:', error);
+      return res.status(500).json({ error: 'Erro ao buscar eventos' });
+    }
+
+    res.json({
+      events: data || [],
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count || 0,
+        pages: Math.ceil((count || 0) / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Erro na API events:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Obter evento por ID
+app.get('/api/events/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Events')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Evento não encontrado' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Erro ao buscar evento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Criar evento (autenticado)
+app.post('/api/events', authenticateToken, async (req, res) => {
+  try {
+    const { title, description, eventType, eventDate, eventTime, location, maxParticipants, isPublic, status } = req.body;
+
+    if (!title || !eventType || !eventDate) {
+      return res.status(400).json({ error: 'Campos obrigatórios não preenchidos' });
+    }
+
+    const { data, error } = await supabase
+      .from('Events')
+      .insert([{
+        title,
+        description,
+        eventType,
+        eventDate,
+        eventTime,
+        location,
+        maxParticipants: maxParticipants || null,
+        currentParticipants: 0,
+        isPublic: isPublic !== undefined ? isPublic : true,
+        status: status || 'planejado',
+        createdBy: req.user.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao criar evento:', error);
+      return res.status(500).json({ error: 'Erro ao criar evento: ' + error.message });
+    }
+
+    res.status(201).json({
+      message: 'Evento criado com sucesso',
+      event: data
+    });
+  } catch (error) {
+    console.error('Erro na API events:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Atualizar evento
+app.patch('/api/events/:id', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Events')
+      .update({
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao atualizar evento:', error);
+      return res.status(500).json({ error: 'Erro ao atualizar evento' });
+    }
+
+    res.json({
+      message: 'Evento atualizado com sucesso',
+      event: data
+    });
+  } catch (error) {
+    console.error('Erro na API events:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Deletar evento
+app.delete('/api/events/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('Events')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Evento removido com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar evento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// ========== ROTAS DE DOAÇÕES ==========
+
+// Registrar doação (público)
+app.post('/api/donations', async (req, res) => {
+  try {
+    const { donorName, donorEmail, donorPhone, donorCPF, donationType, amount, description, paymentMethod } = req.body;
+
+    if (!donorName || !donorEmail || !donationType) {
+      return res.status(400).json({ error: 'Campos obrigatórios não preenchidos' });
+    }
+
+    const { data, error } = await supabase
+      .from('Donations')
+      .insert([{
+        donorName,
+        donorEmail,
+        donorPhone,
+        donorCPF,
+        donationType,
+        amount: amount || null,
+        description,
+        paymentMethod,
+        status: 'pendente',
+        donationDate: new Date().toISOString(),
+        registeredBy: req.user ? req.user.id : null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao registrar doação:', error);
+      return res.status(500).json({ error: 'Erro ao registrar doação: ' + error.message });
+    }
+
+    // Enviar email de confirmação
+    try {
+      await sendEmail(
+        donorEmail,
+        'donationConfirmation',
+        {
+          donorName,
+          donationType,
+          amount,
+          description
+        }
+      );
+      console.log('✅ Email de confirmação de doação enviado');
+    } catch (emailError) {
+      console.error('❌ Erro ao enviar email de doação:', emailError);
+    }
+
+    res.status(201).json({
+      message: 'Doação registrada com sucesso! Obrigado pela sua contribuição.',
+      donation: {
+        id: data.id,
+        status: data.status,
+        createdAt: data.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Erro na API donations:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Listar doações (autenticado)
+app.get('/api/donations', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, donationType } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('Donations')
+      .select('*', { count: 'exact' });
+
+    if (status) query = query.eq('status', status);
+    if (donationType) query = query.eq('donationType', donationType);
+
+    query = query
+      .range(offset, offset + limit - 1)
+      .order('donationDate', { ascending: false });
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('Erro ao listar doações:', error);
+      return res.status(500).json({ error: 'Erro ao buscar doações' });
+    }
+
+    res.json({
+      donations: data || [],
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count || 0,
+        pages: Math.ceil((count || 0) / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Erro na API donations:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Estatísticas de doações
+app.get('/api/donations/stats', authenticateToken, async (req, res) => {
+  try {
+    const { data: allDonations, error } = await supabase
+      .from('Donations')
+      .select('*');
+
+    if (error) {
+      return res.status(500).json({ error: 'Erro ao buscar estatísticas' });
+    }
+
+    const totalDonations = allDonations.length;
+    const totalAmount = allDonations
+      .filter(d => d.donationType === 'dinheiro' && (d.status === 'confirmado' || d.status === 'recebido'))
+      .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+    
+    const pendingCount = allDonations.filter(d => d.status === 'pendente').length;
+    const confirmedCount = allDonations.filter(d => d.status === 'confirmado' || d.status === 'recebido').length;
+
+    // Doações por tipo
+    const byType = {};
+    allDonations.forEach(d => {
+      byType[d.donationType] = (byType[d.donationType] || 0) + 1;
+    });
+
+    res.json({
+      totalDonations,
+      totalAmount,
+      pendingCount,
+      confirmedCount,
+      byType
+    });
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Obter doação por ID
+app.get('/api/donations/:id', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Donations')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Doação não encontrada' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Erro ao buscar doação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Atualizar doação
+app.patch('/api/donations/:id', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Donations')
+      .update({
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao atualizar doação:', error);
+      return res.status(500).json({ error: 'Erro ao atualizar doação' });
+    }
+
+    res.json({
+      message: 'Doação atualizada com sucesso',
+      donation: data
+    });
+  } catch (error) {
+    console.error('Erro na API donations:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Deletar doação
+app.delete('/api/donations/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('Donations')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Doação removida com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar doação:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { DollarSign, Gift, Search, Filter, Download, Plus, X, Eye, Trash2 } from 'lucide-react';
+import { DollarSign, Gift, Search, Filter, Download, Plus, X, Eye, Trash2, TrendingUp, PieChart } from 'lucide-react';
 import api from '../../services/api';
 
 const DonationsManagement = () => {
@@ -8,7 +8,19 @@ const DonationsManagement = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState(null);
+  const [formData, setFormData] = useState({
+    donorName: '',
+    donorEmail: '',
+    donorPhone: '',
+    donorCPF: '',
+    donationType: 'dinheiro',
+    amount: '',
+    description: '',
+    paymentMethod: 'pix',
+    status: 'pendente'
+  });
   const queryClient = useQueryClient();
 
   // Buscar doações
@@ -19,6 +31,23 @@ const DonationsManagement = () => {
   // Buscar estatísticas
   const { data: stats } = useQuery('donations-stats', () =>
     api.get('/donations/stats').then(res => res.data)
+  );
+
+  // Criar doação
+  const createMutation = useMutation(
+    (data) => api.post('/donations', data),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('donations');
+        queryClient.invalidateQueries('donations-stats');
+        setShowCreateModal(false);
+        resetForm();
+        alert('Doação registrada com sucesso!');
+      },
+      onError: (error) => {
+        alert('Erro ao registrar doação: ' + (error.response?.data?.error || error.message));
+      }
+    }
   );
 
   // Atualizar status
@@ -43,6 +72,25 @@ const DonationsManagement = () => {
       }
     }
   );
+
+  const resetForm = () => {
+    setFormData({
+      donorName: '',
+      donorEmail: '',
+      donorPhone: '',
+      donorCPF: '',
+      donationType: 'dinheiro',
+      amount: '',
+      description: '',
+      paymentMethod: 'pix',
+      status: 'pendente'
+    });
+  };
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
+  };
 
   const filteredDonations = donations?.filter(donation => {
     const matchesSearch = donation.donorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,7 +126,19 @@ const DonationsManagement = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header com Estatísticas */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Gestão de Doações</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Gestão de Doações</h1>
+          <button
+            onClick={() => {
+              resetForm();
+              setShowCreateModal(true);
+            }}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Nova Doação
+          </button>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-6 rounded-lg shadow">
@@ -121,6 +181,35 @@ const DonationsManagement = () => {
             </div>
           </div>
         </div>
+
+        {/* Gráfico de Doações por Tipo */}
+        {stats?.byType && (
+          <div className="bg-white p-6 rounded-lg shadow mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <PieChart className="w-5 h-5" />
+              Doações por Tipo
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {Object.entries(stats.byType).map(([type, count]) => {
+                const colors = {
+                  dinheiro: 'bg-green-500',
+                  'ração': 'bg-blue-500',
+                  medicamentos: 'bg-purple-500',
+                  materiais: 'bg-yellow-500',
+                  outros: 'bg-gray-500'
+                };
+                return (
+                  <div key={type} className="text-center">
+                    <div className={`${colors[type] || 'bg-gray-500'} h-20 rounded-lg flex items-center justify-center text-white font-bold text-2xl mb-2`}>
+                      {count}
+                    </div>
+                    <p className="text-sm text-gray-600 capitalize">{type}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filtros */}
@@ -338,6 +427,159 @@ const DonationsManagement = () => {
                   Fechar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Criar Doação */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Registrar Nova Doação</h2>
+                <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Doador *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.donorName}
+                    onChange={(e) => setFormData({ ...formData, donorName: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.donorEmail}
+                      onChange={(e) => setFormData({ ...formData, donorEmail: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                    <input
+                      type="tel"
+                      value={formData.donorPhone}
+                      onChange={(e) => setFormData({ ...formData, donorPhone: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                    <input
+                      type="text"
+                      value={formData.donorCPF}
+                      onChange={(e) => setFormData({ ...formData, donorCPF: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Doação *</label>
+                    <select
+                      required
+                      value={formData.donationType}
+                      onChange={(e) => setFormData({ ...formData, donationType: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      <option value="dinheiro">Dinheiro</option>
+                      <option value="ração">Ração</option>
+                      <option value="medicamentos">Medicamentos</option>
+                      <option value="materiais">Materiais</option>
+                      <option value="outros">Outros</option>
+                    </select>
+                  </div>
+                </div>
+
+                {formData.donationType === 'dinheiro' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pagamento</label>
+                      <select
+                        value={formData.paymentMethod}
+                        onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      >
+                        <option value="pix">PIX</option>
+                        <option value="cartao">Cartão</option>
+                        <option value="boleto">Boleto</option>
+                        <option value="transferencia">Transferência</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="outro">Outro</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                  <textarea
+                    rows="3"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Detalhes da doação..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="pendente">Pendente</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="recebido">Recebido</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </div>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createMutation.isLoading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+                  >
+                    {createMutation.isLoading ? 'Registrando...' : 'Registrar Doação'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
