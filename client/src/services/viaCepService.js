@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import axios from 'axios';
 
 const VIACEP_URL = 'https://viacep.com.br/ws';
