@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useMutation } from 'react-query';
 import { 
   Heart, DollarSign, Package, Check, AlertCircle,
-  CreditCard, Gift, PawPrint, Pill, Trash2, Droplet
+  CreditCard, Gift, Pill, Trash2, Droplet, Dog, Cat
 } from 'lucide-react';
 import api from '../services/api';
 import MaskedInput from '../components/MaskedInput';
@@ -17,8 +17,8 @@ const DonationForm = () => {
 
   // Lista de itens disponíveis para doação
   const availableItems = [
-    { id: 'racao_cao', name: 'Ração para Cães', icon: PawPrint, unit: 'kg', color: 'blue' },
-    { id: 'racao_gato', name: 'Ração para Gatos', icon: PawPrint, unit: 'kg', color: 'purple' },
+    { id: 'racao_cao', name: 'Ração para Cães', icon: Dog, unit: 'kg', color: 'blue' },
+    { id: 'racao_gato', name: 'Ração para Gatos', icon: Cat, unit: 'kg', color: 'purple' },
     { id: 'medicamento', name: 'Medicamentos', icon: Pill, unit: 'unidade', color: 'red' },
     { id: 'vermifugo', name: 'Vermífugo', icon: Droplet, unit: 'unidade', color: 'green' },
     { id: 'vacina', name: 'Vacinas', icon: Pill, unit: 'dose', color: 'yellow' },
@@ -48,7 +48,8 @@ const DonationForm = () => {
         setTimeout(() => setShowSuccess(false), 5000);
       },
       onError: (error) => {
-        alert('Erro ao registrar doação: ' + (error.response?.data?.error || error.message));
+        const errorMsg = error.response?.data?.error || error.message || 'Erro desconhecido';
+        alert('❌ Erro ao registrar doação\n\n' + errorMsg + '\n\nPor favor, verifique os dados e tente novamente.');
       }
     }
   );
@@ -71,11 +72,17 @@ const DonationForm = () => {
   };
 
   const onSubmit = (data) => {
+    // Validação para doação de itens
+    if (donationType === 'item' && selectedItems.length === 0) {
+      alert('⚠️ Por favor, selecione pelo menos um item para doar!');
+      return;
+    }
+
     const payload = {
       donorName: data.donorName,
       donorEmail: data.donorEmail,
       donorPhone: data.donorPhone,
-      donorCPF: data.donorCPF,
+      donorCPF: data.donorCPF || null,
       donationType: donationType,
     };
 
@@ -89,6 +96,7 @@ const DonationForm = () => {
         `${item.name}: ${item.quantity} ${item.unit}${item.quantity > 1 ? 's' : ''}`
       ).join(', ');
       
+      payload.amount = null; // IMPORTANTE: amount deve ser null para itens
       payload.description = itemsDescription;
       payload.paymentMethod = 'item_fisico';
     }
