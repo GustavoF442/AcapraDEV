@@ -2536,6 +2536,191 @@ app.post('/api/events/:id/send-reminder', authenticateToken, async (req, res) =>
   }
 });
 
+// ========== ROTAS DE CASTRAÇÕES ==========
+
+// Listar castrações
+app.get('/api/castrations', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status, eventId, startDate, endDate } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('Castrations')
+      .select(`
+        *,
+        event:Events(id, title, eventDate)
+      `, { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('castrationDate', { ascending: false });
+
+    if (status) query = query.eq('status', status);
+    if (eventId) query = query.eq('eventId', eventId);
+    if (startDate) query = query.gte('castrationDate', startDate);
+    if (endDate) query = query.lte('castrationDate', endDate);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      castrations: data || [],
+      pagination: {
+        currentPage: parseInt(page),
+        totalItems: count || 0,
+        itemsPerPage: parseInt(limit),
+        totalPages: Math.ceil((count || 0) / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao listar castrações:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Criar castração
+app.post('/api/castrations', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Castrations')
+      .insert([{
+        ...req.body,
+        registeredBy: req.user?.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao criar castração:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(201).json({ message: 'Castração registrada com sucesso', castration: data });
+  } catch (error) {
+    console.error('Erro na API castrations:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Atualizar castração
+app.put('/api/castrations/:id', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Castrations')
+      .update({
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Castração atualizada com sucesso', castration: data });
+  } catch (error) {
+    console.error('Erro ao atualizar castração:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Deletar castração
+app.delete('/api/castrations/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('Castrations')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Castração removida com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar castração:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Relatório de castrações por evento
+app.get('/api/castrations/report/by-event', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Castrations')
+      .select(`
+        eventId,
+        event:Events(id, title, eventDate),
+        status
+      `)
+      .not('eventId', 'is', null);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    // Agrupar por evento
+    const report = {};
+    data.forEach(castration => {
+      const eventId = castration.eventId;
+      if (!report[eventId]) {
+        report[eventId] = {
+          event: castration.event,
+          total: 0,
+          realized: 0,
+          scheduled: 0,
+          cancelled: 0
+        };
+      }
+      report[eventId].total++;
+      if (castration.status === 'realizado') report[eventId].realized++;
+      if (castration.status === 'agendado') report[eventId].scheduled++;
+      if (castration.status === 'cancelado') report[eventId].cancelled++;
+    });
+
+    res.json({ report: Object.values(report) });
+  } catch (error) {
+    console.error('Erro ao gerar relatório:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Estatísticas de castrações
+app.get('/api/castrations/stats', authenticateToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('Castrations')
+      .select('*');
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    const stats = {
+      total: data.length,
+      realized: data.filter(c => c.status === 'realizado').length,
+      scheduled: data.filter(c => c.status === 'agendado').length,
+      cancelled: data.filter(c => c.status === 'cancelado').length,
+      bySpecies: {
+        cachorro: data.filter(c => c.animalSpecies?.toLowerCase().includes('cão') || c.animalSpecies?.toLowerCase().includes('cachorro')).length,
+        gato: data.filter(c => c.animalSpecies?.toLowerCase().includes('gato')).length
+      },
+      withEvent: data.filter(c => c.eventId).length,
+      withoutEvent: data.filter(c => !c.eventId).length
+    };
+
+    res.json({ stats });
+  } catch (error) {
+    console.error('Erro ao calcular estatísticas:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // ========== ROTAS DE DOAÇÕES ==========
 
 // Registrar doação (público)
