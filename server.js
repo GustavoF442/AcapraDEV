@@ -217,13 +217,39 @@ const supabase = createClient(
 // API Routes - Animals
 app.get('/api/animals', async (req, res) => {
   try {
-    const { status = 'disponível', page = 1, limit = 12 } = req.query;
+    const { 
+      status = 'disponível', 
+      page = 1, 
+      limit = 12,
+      species,
+      size,
+      gender,
+      age,
+      city,
+      state,
+      search
+    } = req.query;
     const offset = (page - 1) * limit;
 
     let query = supabase
       .from('Animals')
       .select('*', { count: 'exact' })
-      .eq('status', status)
+      .eq('status', status);
+
+    // Aplicar filtros opcionais
+    if (species) query = query.eq('species', species);
+    if (size) query = query.eq('size', size);
+    if (gender) query = query.eq('gender', gender);
+    if (age) query = query.eq('age', age);
+    if (city) query = query.ilike('city', `%${city}%`);
+    if (state) query = query.eq('state', state);
+    
+    // Busca por nome ou raça
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,breed.ilike.%${search}%,description.ilike.%${search}%`);
+    }
+
+    query = query
       .range(offset, offset + limit - 1)
       .order('createdAt', { ascending: false });
 
@@ -243,7 +269,7 @@ app.get('/api/animals', async (req, res) => {
         total: count || 0,
         page: parseInt(page),
         limit: parseInt(limit),
-        totalPages: Math.ceil((count || 0) / limit)
+        pages: Math.ceil((count || 0) / limit)
       }
     });
 
@@ -673,7 +699,7 @@ app.get('/api/stats/admin', authenticateToken, async (req, res) => {
       supabase.from('Contacts').select('status', { count: 'exact' }),
       supabase.from('News').select('status', { count: 'exact' }),
       supabase.from('Animals').select('*').order('createdAt', { ascending: false }).limit(6),
-      supabase.from('Adoptions').select('*, Animals(name)').order('createdAt', { ascending: false }).limit(5),
+      supabase.from('Adoptions').select('*, animal:Animals(id, name, species)').order('createdAt', { ascending: false }).limit(5),
       supabase.from('Contacts').select('*').order('createdAt', { ascending: false }).limit(5)
     ]);
 
