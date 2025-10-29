@@ -4,7 +4,8 @@ import api from '../../services/api';
 import { resolveImageUrl } from '../../utils/images';
 import {
   Eye, CheckCircle, XCircle, Clock, Mail, Phone, MapPin,
-  Home, Heart, User, Calendar, FileText, AlertCircle, X, Filter
+  Home, Heart, User, Calendar, FileText, AlertCircle, X, Filter,
+  Upload, File, Trash2, Download
 } from 'lucide-react';
 
 const AdminAdoptions = () => {
@@ -12,6 +13,8 @@ const AdminAdoptions = () => {
   const [page, setPage] = useState(1);
   const [selectedAdoption, setSelectedAdoption] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
+  const [documentForm, setDocumentForm] = useState({ type: 'RG', fileName: '', fileUrl: '' });
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery(
@@ -40,6 +43,34 @@ const AdminAdoptions = () => {
     }
   );
 
+  // Mutations para documentos
+  const addDocumentMutation = useMutation(
+    ({ id, document }) => api.post(`/adoptions/${id}/documents`, document),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('adoptions');
+        setDocumentForm({ type: 'RG', fileName: '', fileUrl: '' });
+        alert('Documento adicionado com sucesso!');
+      },
+      onError: (error) => {
+        alert('Erro ao adicionar documento: ' + (error.response?.data?.error || error.message));
+      }
+    }
+  );
+
+  const deleteDocumentMutation = useMutation(
+    ({ adoptionId, docId }) => api.delete(`/adoptions/${adoptionId}/documents/${docId}`),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('adoptions');
+        alert('Documento removido com sucesso!');
+      },
+      onError: (error) => {
+        alert('Erro ao remover documento: ' + (error.response?.data?.error || error.message));
+      }
+    }
+  );
+
   const handleUpdateStatus = (newStatus) => {
     if (!selectedAdoption) return;
     const names = {
@@ -50,6 +81,26 @@ const AdminAdoptions = () => {
     };
     if (window.confirm(`Confirmar ${names[newStatus]} esta solicitação?`)) {
       updateStatusMutation.mutate({ id: selectedAdoption.id, status: newStatus });
+    }
+  };
+
+  const handleAddDocument = () => {
+    if (!documentForm.fileName || !documentForm.fileUrl) {
+      alert('Preencha o nome e URL do arquivo');
+      return;
+    }
+    addDocumentMutation.mutate({
+      id: selectedAdoption.id,
+      document: documentForm
+    });
+  };
+
+  const handleDeleteDocument = (docId) => {
+    if (window.confirm('Tem certeza que deseja remover este documento?')) {
+      deleteDocumentMutation.mutate({
+        adoptionId: selectedAdoption.id,
+        docId
+      });
     }
   };
 
@@ -233,12 +284,39 @@ const AdminAdoptions = () => {
           <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white mb-10" onClick={(e) => e.stopPropagation()}>
             {/* Header do Modal */}
             <div className="flex justify-between items-center mb-6 pb-4 border-b">
-              <h3 className="text-2xl font-bold text-gray-900">Detalhes da Solicitação #{selectedAdoption.id}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">Solicitação #{selectedAdoption.id}</h3>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="h-6 w-6" />
               </button>
             </div>
 
+            {/* Tabs */}
+            <div className="flex space-x-1 mb-6 border-b">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  activeTab === 'details'
+                    ? 'border-b-2 border-green-600 text-green-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <FileText className="h-4 w-4 inline mr-2" />
+                Detalhes
+              </button>
+              <button
+                onClick={() => setActiveTab('documents')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  activeTab === 'documents'
+                    ? 'border-b-2 border-green-600 text-green-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <File className="h-4 w-4 inline mr-2" />
+                Documentos ({(selectedAdoption.documents || []).length})
+              </button>
+            </div>
+
+            {activeTab === 'details' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Coluna Esquerda - Animal e Adotante */}
               <div className="space-y-6">
@@ -434,6 +512,111 @@ const AdminAdoptions = () => {
                 </div>
               </div>
             </div>
+            )}
+
+            {activeTab === 'documents' && (
+              <div className="space-y-6">
+                {/* Formulário para adicionar documento */}
+                <div className="bg-blue-50 p-6 rounded-lg">
+                  <h4 className="font-semibold text-lg mb-4 flex items-center">
+                    <Upload className="h-5 w-5 mr-2 text-blue-600" />
+                    Adicionar Novo Documento
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                      <select
+                        value={documentForm.type}
+                        onChange={(e) => setDocumentForm({ ...documentForm, type: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                      >
+                        <option value="RG">RG</option>
+                        <option value="CPF">CPF</option>
+                        <option value="Comprovante Residência">Comprovante Residência</option>
+                        <option value="Comprovante Renda">Comprovante Renda</option>
+                        <option value="Termo Responsabilidade">Termo Responsabilidade</option>
+                        <option value="Outro">Outro</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Arquivo</label>
+                      <input
+                        type="text"
+                        value={documentForm.fileName}
+                        onChange={(e) => setDocumentForm({ ...documentForm, fileName: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                        placeholder="Ex: rg_joao_silva.pdf"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">URL do Arquivo</label>
+                      <input
+                        type="url"
+                        value={documentForm.fileUrl}
+                        onChange={(e) => setDocumentForm({ ...documentForm, fileUrl: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                        placeholder="https://..."
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleAddDocument}
+                    disabled={addDocumentMutation.isLoading}
+                    className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {addDocumentMutation.isLoading ? 'Adicionando...' : 'Adicionar Documento'}
+                  </button>
+                </div>
+
+                {/* Lista de documentos */}
+                <div>
+                  <h4 className="font-semibold text-lg mb-4">Documentos Anexados</h4>
+                  {selectedAdoption.documents && selectedAdoption.documents.length > 0 ? (
+                    <div className="space-y-3">
+                      {selectedAdoption.documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300">
+                          <div className="flex items-center space-x-3">
+                            <File className="h-8 w-8 text-blue-600" />
+                            <div>
+                              <p className="font-medium text-gray-900">{doc.type}</p>
+                              <p className="text-sm text-gray-500">{doc.fileName}</p>
+                              <p className="text-xs text-gray-400">
+                                Enviado em {new Date(doc.uploadedAt).toLocaleString('pt-BR')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <a
+                              href={doc.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                              title="Abrir documento"
+                            >
+                              <Download className="h-5 w-5" />
+                            </a>
+                            <button
+                              onClick={() => handleDeleteDocument(doc.id)}
+                              disabled={deleteDocumentMutation.isLoading}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                              title="Remover documento"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <File className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500">Nenhum documento anexado ainda</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Ações do Modal */}
             {selectedAdoption.status !== 'aprovado' && selectedAdoption.status !== 'rejeitado' && (

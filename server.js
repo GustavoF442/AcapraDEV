@@ -1776,6 +1776,93 @@ app.patch('/api/adoptions/:id/status', authenticateToken, async (req, res) => {
   }
 });
 
+// Adoptions - Adicionar documento
+app.post('/api/adoptions/:id/documents', authenticateToken, async (req, res) => {
+  try {
+    const { type, fileName, fileUrl } = req.body;
+
+    if (!type || !fileName || !fileUrl) {
+      return res.status(400).json({ error: 'Campos obrigatórios: type, fileName, fileUrl' });
+    }
+
+    // Buscar adoção atual
+    const { data: adoption, error: fetchError } = await supabase
+      .from('Adoptions')
+      .select('documents')
+      .eq('id', req.params.id)
+      .single();
+
+    if (fetchError || !adoption) {
+      return res.status(404).json({ error: 'Adoção não encontrada' });
+    }
+
+    // Adicionar novo documento
+    const documents = adoption.documents || [];
+    const newDocument = {
+      id: Date.now().toString(),
+      type,
+      fileName,
+      fileUrl,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: req.user.id
+    };
+    documents.push(newDocument);
+
+    // Atualizar no banco
+    const { data, error } = await supabase
+      .from('Adoptions')
+      .update({ documents })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Documento adicionado com sucesso', adoption: data });
+  } catch (error) {
+    console.error('Erro ao adicionar documento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Adoptions - Remover documento
+app.delete('/api/adoptions/:id/documents/:docId', authenticateToken, async (req, res) => {
+  try {
+    // Buscar adoção atual
+    const { data: adoption, error: fetchError } = await supabase
+      .from('Adoptions')
+      .select('documents')
+      .eq('id', req.params.id)
+      .single();
+
+    if (fetchError || !adoption) {
+      return res.status(404).json({ error: 'Adoção não encontrada' });
+    }
+
+    // Remover documento
+    const documents = (adoption.documents || []).filter(doc => doc.id !== req.params.docId);
+
+    // Atualizar no banco
+    const { data, error } = await supabase
+      .from('Adoptions')
+      .update({ documents })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Documento removido com sucesso', adoption: data });
+  } catch (error) {
+    console.error('Erro ao remover documento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Animals - Criar animal
 app.post('/api/animals', authenticateToken, upload.array('photos', 10), async (req, res) => {
   try {
