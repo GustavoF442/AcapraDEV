@@ -48,7 +48,7 @@ const Donations = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="text-white py-20" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+      <section className="text-white py-20" style={{background: 'linear-gradient(135deg, #555086 0%, #47426f 100%)'}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <Heart className="h-20 w-20 mx-auto mb-6 animate-pulse" />
@@ -61,7 +61,7 @@ const Donations = () => {
             <Link
               to="/doacoes/nova"
               className="inline-flex items-center space-x-3 px-10 py-5 bg-white rounded-full font-bold text-xl shadow-2xl transform hover:scale-105 transition-all"
-              style={{color: '#764ba2'}}
+              style={{color: '#555086'}}
             >
               <Gift className="h-7 w-7" />
               <span>Fazer Doação Agora</span>

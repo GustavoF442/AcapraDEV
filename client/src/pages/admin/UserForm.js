@@ -185,21 +185,18 @@ const UserForm = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email *
               </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <input
-                  type="email"
-                  {...register('email', { 
-                    required: 'Email é obrigatório',
-                    pattern: {
-                      value: /^\S+@\S+$/i,
-                      message: 'Email inválido'
-                    }
-                  })}
-                  className="input-field pl-10"
-                  placeholder="Email"
-                />
-              </div>
+              <input
+                type="email"
+                {...register('email', { 
+                  required: 'Email é obrigatório',
+                  pattern: {
+                    value: /^\S+@\S+$/i,
+                    message: 'Email inválido'
+                  }
+                })}
+                className="input-field"
+                placeholder="seuemail@exemplo.com"
+              />
               {errors.email && (
                 <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
               )}
@@ -209,24 +206,19 @@ const UserForm = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Telefone
               </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <input
-                  type="tel"
-                  {...register('phone')}
-                  className="input-field pl-10"
-                  placeholder="Telefone"
-                />
-              </div>
+              <input
+                type="tel"
+                {...register('phone')}
+                className="input-field"
+                placeholder="(00) 00000-0000"
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Departamento
               </label>
-              <div className="relative">
-                <Building className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <select {...register('department')} className="input-field pl-10">
+              <select {...register('department')} className="input-field">
                   <option value="">Selecione um departamento</option>
                   <option value="Administração">Administração</option>
                   <option value="Cuidados Veterinários">Cuidados Veterinários</option>
@@ -235,7 +227,6 @@ const UserForm = () => {
                   <option value="Voluntariado">Voluntariado</option>
                   <option value="Eventos">Eventos</option>
                 </select>
-              </div>
             </div>
           </div>
         </div>

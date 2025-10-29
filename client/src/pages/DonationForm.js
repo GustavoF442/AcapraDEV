@@ -105,9 +105,9 @@ const DonationForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero compacto */}
-      <div className="text-white py-12" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+      <div className="text-white py-12" style={{background: 'linear-gradient(135deg, #555086 0%, #47426f 100%)'}}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Heart className="h-16 w-16 mx-auto mb-4 animate-pulse" />
           <h1 className="text-4xl md:text-5xl font-bold mb-3">
@@ -141,16 +141,17 @@ const DonationForm = () => {
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           
           {/* Toggle Tipo de Doação */}
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6">
+          <div className="p-6" style={{background: 'linear-gradient(135deg, #555086 0%, #47426f 100%)'}}>
             <div className="flex items-center justify-center space-x-4">
               <button
                 type="button"
                 onClick={() => setDonationType('dinheiro')}
                 className={`flex items-center space-x-3 px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 ${
                   donationType === 'dinheiro'
-                    ? 'bg-white text-purple-600 shadow-lg scale-105'
-                    : 'bg-purple-700 text-white hover:bg-purple-800'
+                    ? 'bg-white shadow-lg scale-105'
+                    : 'text-white'
                 }`}
+                style={donationType === 'dinheiro' ? {color: '#555086'} : {backgroundColor: 'rgba(255, 255, 255, 0.2)'}}
               >
                 <DollarSign className="h-6 w-6" />
                 <span>Doação em Dinheiro</span>
@@ -161,9 +162,10 @@ const DonationForm = () => {
                 onClick={() => setDonationType('item')}
                 className={`flex items-center space-x-3 px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 ${
                   donationType === 'item'
-                    ? 'bg-white text-pink-600 shadow-lg scale-105'
-                    : 'bg-pink-700 text-white hover:bg-pink-800'
+                    ? 'bg-white shadow-lg scale-105'
+                    : 'text-white'
                 }`}
+                style={donationType === 'item' ? {color: '#555086'} : {backgroundColor: 'rgba(255, 255, 255, 0.2)'}}
               >
                 <Package className="h-6 w-6" />
                 <span>Doação de Itens</span>
@@ -399,7 +401,7 @@ const DonationForm = () => {
                 type="submit"
                 disabled={donationMutation.isLoading || (donationType === 'item' && selectedItems.length === 0)}
                 className="w-full py-5 px-8 rounded-xl text-white font-bold text-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 shadow-xl"
-                style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}
+                style={{background: 'linear-gradient(135deg, #555086 0%, #555086 100%)'}}
               >
                 {donationMutation.isLoading ? (
                   <>
